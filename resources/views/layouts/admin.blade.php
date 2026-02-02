@@ -198,9 +198,6 @@
 
 
     @stack('scripts')
-
-
-
 </body>
 
 </html>
