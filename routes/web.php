@@ -10,7 +10,7 @@ Route::get('/', function () {
 });
 
 Route::prefix('admin')->middleware('auth')->group(function () {
-    Route::livewire('dashboard', Dashboard::class)
+    Route::livewire('/', Dashboard::class)
         ->name('admin.dashboard');
     Route::livewire('categories', CategoryList::class)
         ->name('admin.categories');
