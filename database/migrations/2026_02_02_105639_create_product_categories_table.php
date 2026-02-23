@@ -18,9 +18,11 @@ return new class extends Migration
                 ->constrained('product_categories')
                 ->nullOnDelete();
 
-            $table->string('name');
+
+            $table->string('title');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
+            $table->boolean('status')->default(true);
 
             $table->timestamps();
 

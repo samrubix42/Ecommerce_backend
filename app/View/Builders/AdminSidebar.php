@@ -20,26 +20,22 @@ class AdminSidebar
 
     public function get(): Collection
     {
-        $menu = collect([
-
-            (object)[
+        return collect([
+            (object) [
                 'title' => 'Dashboard',
-                'icon' => 'ti ti-home',
+                'icon' => 'ri-dashboard-line',
                 'url' => route('admin.dashboard'),
                 'hasSubmenu' => false,
                 'submenu' => [],
             ],
-            (object)[
+            (object) [
                 'title' => 'Categories',
-                'icon' => 'ti ti-list',
+                'icon' => 'ri-folder-line',
                 'url' => route('admin.categories'),
                 'hasSubmenu' => false,
                 'submenu' => [],
             ],
-
-         
+          
         ]);
-
-        return $menu;
     }
 }

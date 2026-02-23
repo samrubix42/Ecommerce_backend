@@ -14,42 +14,42 @@ class ProductCategorySeeder extends Seeder
     {
         $categories = [
             [
-                'name' => 'Electronics',
+                'title' => 'Electronics',
                 'slug' => 'electronics',
                 'description' => 'All electronic devices and gadgets',
             ],
             [
-                'name' => 'Clothing',
+                'title' => 'Clothing',
                 'slug' => 'clothing',
                 'description' => 'Fashion and apparel products',
             ],
             [
-                'name' => 'Books',
+                'title' => 'Books',
                 'slug' => 'books',
                 'description' => 'Physical and digital books',
             ],
             [
-                'name' => 'Home & Garden',
+                'title' => 'Home & Garden',
                 'slug' => 'home-garden',
                 'description' => 'Home decor and gardening supplies',
             ],
             [
-                'name' => 'Sports & Outdoors',
+                'title' => 'Sports & Outdoors',
                 'slug' => 'sports-outdoors',
                 'description' => 'Sports equipment and outdoor gear',
             ],
             [
-                'name' => 'Beauty & Personal Care',
+                'title' => 'Beauty & Personal Care',
                 'slug' => 'beauty-personal-care',
                 'description' => 'Cosmetics and personal care products',
             ],
             [
-                'name' => 'Toys & Games',
+                'title' => 'Toys & Games',
                 'slug' => 'toys-games',
                 'description' => 'Children toys and games',
             ],
             [
-                'name' => 'Food & Beverages',
+                'title' => 'Food & Beverages',
                 'slug' => 'food-beverages',
                 'description' => 'Food items and drinks',
             ],

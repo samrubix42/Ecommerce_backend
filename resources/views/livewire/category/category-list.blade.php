@@ -1,212 +1,199 @@
-@section('title', 'Product Categories')
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-<div>
-
-    <!-- SEARCH & ACTIONS -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="d-flex align-items-center gap-3">
-
-                <!-- SEARCH -->
-                <div class="flex-fill">
-                    <div class="input-icon">
-                        <span class="input-icon-addon">
-                            <i class="ti ti-search"></i>
-                        </span>
-                        <input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            class="form-control"
-                            placeholder="Search categories..."
-                        >
-                    </div>
-                </div>
-
-                <!-- ADD BUTTON -->
-                <div class="col-auto">
-                    <button wire:click="openModal" class="btn btn-primary">
-                        <i class="ti ti-plus me-1"></i>
-                        <span class="d-none d-sm-inline">Add Category</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
+    <!-- Page Heading -->
+    <div class="mb-6">
+        <h1 class="text-xl font-semibold text-slate-900">
+            Category List
+        </h1>
+        <p class="mt-1 text-sm text-slate-500">
+            Manage blog categories, status and visibility.
+        </p>
     </div>
 
-    <!-- TABLE CARD -->
-    <div class="card">
+    <!-- Main content -->
+    <div class="space-y-4">
 
-        <div class="table-responsive">
-            <table class="table table-vcenter card-table">
-                <thead>
-                    <tr>
-                        <th wire:click="sort('name')" class="cursor-pointer">
-                            Name
-                            @if($sortField === 'name')
-                                <span class="text-muted small">({{ $sortDirection }})</span>
-                            @endif
-                        </th>
-                        <th>Slug</th>
-                        <th>Description</th>
-                        <th wire:click="sort('created_at')" class="cursor-pointer">
-                            Created
-                            @if($sortField === 'created_at')
-                                <span class="text-muted small">({{ $sortDirection }})</span>
-                            @endif
-                        </th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
+        <!-- Top bar: search + create button -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="w-full sm:max-w-xs">
+                <label class="block text-xs font-medium text-slate-500 mb-1">
+                    Search Categories
+                </label>
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">
+                        <i class="ri-search-line"></i>
+                    </span>
+                    <input
+                        type="text"
+                        wire:model.live="search"
+                        placeholder="Search by title or slug..."
+                        class="block w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm
+                               text-slate-700 placeholder:text-slate-400
+                               focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40 outline-none">
+                </div>
+            </div>
 
-                <tbody>
-                    @forelse($categories as $category)
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="avatar bg-primary text-white">
-                                        {{ strtoupper(substr($category->name, 0, 1)) }}
-                                    </span>
-                                    <div>
-                                        <div class="fw-semibold">{{ $category->name }}</div>
-                                        <div class="text-muted small">ID: {{ $category->id }}</div>
-                                        @if($category->parent)
-                                            <div class="text-muted small">
-                                                Parent: <span class="badge bg-info">{{ $category->parent->name }}</span>
-                                            </div>
-                                        @endif
+            <div class="flex sm:justify-end">
+                <button
+                    @click="$dispatch('open-modal');$wire.resetForm()"
+                    class="inline-flex items-center gap-2 rounded-md bg-blue-600
+                           px-4 py-2 text-sm font-medium text-white shadow-sm
+                           hover:bg-blue-500 focus:outline-none focus:ring-2
+                           focus:ring-blue-500/60 focus:ring-offset-1">
+                    <i class="ri-add-line text-base"></i>
+                    <span>Add Category</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table card (desktop & tablet) -->
+        <div class="hidden sm:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50">
+                        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <th class="px-4 py-3 w-12">#</th>
+                            <th class="px-4 py-3">Title</th>
+                            <th class="px-4 py-3">Slug</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right w-40">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        @forelse($categories as $category)
+                            <tr wire:key="category-{{ $category->id }}" class="hover:bg-slate-50/80">
+                                <td class="px-4 py-3 text-slate-500">
+                                    {{ $loop->iteration }}
+                                </td>
+                                <td class="px-4 py-3 font-medium text-slate-800">
+                                    {{ $category->title }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-600">
+                                    {{ $category->slug }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($category->status)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                            Active
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                            Inactive
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            @click="
+                                                $dispatch('open-modal');
+                                                $wire.openEditModal({{ $category->id }})
+                                            "
+                                            class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5
+                                                   text-xs font-medium text-slate-700 hover:bg-slate-100">
+                                            <i class="ri-edit-line text-sm"></i>
+                                            Edit
+                                        </button>
+
+                                        <button
+                                            @click="
+                                                $dispatch('open-delete-modal');
+                                                $wire.confirmDelete({{ $category->id }})
+                                            "
+                                            wire:confirm="Are you sure?"
+                                            class="inline-flex items-center gap-1 rounded-md border border-rose-200 px-2.5 py-1.5
+                                                   text-xs font-medium text-rose-600 hover:bg-rose-50">
+                                            <i class="ri-delete-bin-6-line text-sm"></i>
+                                            Delete
+                                        </button>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-500">
+                                    No categories found.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                            <td>
-                                <span class="badge bg-blue-lt">{{ $category->slug }}</span>
-                            </td>
+        <!-- Card list (mobile) -->
+        <div class="space-y-3 sm:hidden">
+            @forelse($categories as $category)
+                <div wire:key="category-card-{{ $category->id }}" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">
+                                {{ $category->title }}
+                            </p>
+                            <p class="mt-0.5 text-[11px] font-mono text-slate-500 break-all">
+                                {{ $category->slug }}
+                            </p>
+                        </div>
 
-                            <td class="text-muted" style="max-width:360px">
-                                {{ Str::limit($category->description ?? '—', 80) }}
-                            </td>
-
-                            <td>
-                                <span class="text-muted small">
-                                    {{ $category->created_at->format('M d, Y') }}
+                        <div class="text-right text-xs">
+                            @if($category->status)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                    Active
                                 </span>
-                            </td>
-
-                            <td class="text-end">
-                                <button
-                                    wire:click="openModal({{ $category->id }})"
-                                    class="btn btn-sm btn-outline-primary"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    wire:click="delete({{ $category->id }})"
-                                    class="btn btn-sm btn-outline-danger"
-                                >
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                No categories found
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <div class="text-muted">
-                Showing {{ $categories->firstItem() ?? 0 }}
-                –
-                {{ $categories->lastItem() ?? 0 }}
-                of {{ $categories->total() }}
-            </div>
-
-            <div>
-                {{ $categories->links() }}
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL -->
-    @if($showModal)
-        <div
-            class="modal modal-blur fade show"
-            style="display:block"
-            tabindex="-1"
-            wire:ignore.self
-        >
-            <div class="modal-dialog modal-dialog-centered modal-md">
-                <div class="modal-content">
-
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            {{ $isEdit ? 'Edit Category' : 'Add Category' }}
-                        </h5>
-                        <button type="button" class="btn-close" wire:click="closeModal"></button>
+                            @else
+                                <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                    Inactive
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
-                    <form wire:submit.prevent="save">
-                        <div class="modal-body">
+                    <div class="mt-4 flex items-center justify-end gap-2">
+                        <button
+                            @click="
+                                $dispatch('open-modal');
+                                $wire.openEditModal({{ $category->id }})
+                            "
+                            class="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5
+                                   text-xs font-medium text-slate-700 hover:bg-slate-100">
+                            <i class="ri-edit-line text-sm"></i>
+                            Edit
+                        </button>
 
-                            <div class="mb-3">
-                                <label class="form-label">Parent Category</label>
-                                <select wire:model.defer="parentId" class="form-select">
-                                    <option value="">-- No Parent (Root Category) --</option>
-                                    @foreach($parentCategories as $parent)
-                                        @if(!$isEdit || $parent->id !== $categoryId)
-                                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                                @error('parentId') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Name</label>
-                                <input type="text" wire:model.defer="name" class="form-control">
-                                @error('name') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Slug</label>
-                                <input type="text" wire:model.defer="slug" class="form-control">
-                                @error('slug') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-
-                            <div>
-                                <label class="form-label">Description</label>
-                                <textarea wire:model.defer="description" class="form-control" rows="3"></textarea>
-                                @error('description') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" wire:click="closeModal">
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                {{ $isEdit ? 'Update' : 'Create' }}
-                            </button>
-                        </div>
-                    </form>
-
+                        <button
+                            @click="
+                                $dispatch('open-delete-modal');
+                                $wire.confirmDelete({{ $category->id }})
+                            "
+                            wire:confirm="Are you sure?"
+                            class="inline-flex items-center gap-1 rounded-md border border-rose-200 px-2.5 py-1.5
+                                   text-xs font-medium text-rose-600 hover:bg-rose-50">
+                            <i class="ri-delete-bin-6-line text-sm"></i>
+                            Delete
+                        </button>
+                    </div>
                 </div>
-            </div>
+            @empty
+                <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+                    No categories found.
+                </div>
+            @endforelse
         </div>
 
-        <!-- MODAL BACKDROP -->
-        <div class="modal-backdrop fade show"></div>
-    @endif
+        <!-- Pagination -->
+        <div class="mt-3 flex justify-end">
+            {{ $categories->links() }}
+        </div>
 
+        <!-- Alpine Modal for Add/Edit Category -->
+        @include('livewire.category.category-modal')
+        <!-- Alpine Modal for Delete Confirmation -->
+        @include('livewire.category.delete')
 
-
+    </div>
 </div>
