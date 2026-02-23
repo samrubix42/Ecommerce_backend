@@ -69,16 +69,12 @@
                                     </span>
                                     <div>
                                         <div class="fw-semibold">{{ $category->name }}</div>
-                                        <div class="text-muted small mb-1">ID: {{ $category->id }}</div>
-                                        <div class="text-muted small">
-                                            @if($category->parent)
-                                                <span class="badge bg-info-lt">Subcategory</span>
-                                                <span class="ms-1">of</span>
-                                                <span class="badge bg-info ms-1">{{ $category->parent->name }}</span>
-                                            @else
-                                                <span class="badge bg-green-lt">Root Category</span>
-                                            @endif
-                                        </div>
+                                        <div class="text-muted small">ID: {{ $category->id }}</div>
+                                        @if($category->parent)
+                                            <div class="text-muted small">
+                                                Parent: <span class="badge bg-info">{{ $category->parent->name }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -106,7 +102,7 @@
                                 </button>
 
                                 <button
-                                    wire:click="confirmDelete({{ $category->id }})"
+                                    wire:click="delete({{ $category->id }})"
                                     class="btn btn-sm btn-outline-danger"
                                 >
                                     Delete
@@ -159,46 +155,36 @@
 
                     <form wire:submit.prevent="save">
                         <div class="modal-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" wire:model.live="name" class="form-control" placeholder="e.g. Electronics">
-                                    @error('name') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
 
-                                <div class="col-12">
-                                    <label class="form-label">Slug</label>
-                                    <input type="text" wire:model="slug" class="form-control" placeholder="e.g. electronics">
-                                    @error('slug') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Parent Category</label>
+                                <select wire:model.defer="parentId" class="form-select">
+                                    <option value="">-- No Parent (Root Category) --</option>
+                                    @foreach($parentCategories as $parent)
+                                        @if(!$isEdit || $parent->id !== $categoryId)
+                                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                @error('parentId') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
 
-                                <div class="col-12">
-                                    <label class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" wire:model.live="isSubcategory">
-                                        <span class="form-check-label">This is a subcategory</span>
-                                    </label>
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" wire:model.defer="name" class="form-control">
+                                @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
 
-                                    @if($isSubcategory)
-                                        <label class="form-label">Parent Category</label>
-                                        <select wire:model="parentId" class="form-select">
-                                            <option value="">Select parent category...</option>
-                                            @foreach($parentCategories as $parent)
-                                                @if(!$isEdit || $parent->id !== $categoryId)
-                                                    <option value="{{ $parent->id }}">{{ $parent->name }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        @error('parentId') <small class="text-danger">{{ $message }}</small> @enderror
-                                    @else
-                                        <div class="text-muted small">Leave unchecked to create a root category.</div>
-                                    @endif
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Slug</label>
+                                <input type="text" wire:model.defer="slug" class="form-control">
+                                @error('slug') <small class="text-danger">{{ $message }}</small> @enderror
+                            </div>
 
-                                <div class="col-12">
-                                    <label class="form-label">Description</label>
-                                    <textarea wire:model="description" class="form-control" rows="3" placeholder="Short description of this category"></textarea>
-                                    @error('description') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
+                            <div>
+                                <label class="form-label">Description</label>
+                                <textarea wire:model.defer="description" class="form-control" rows="3"></textarea>
+                                @error('description') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
 
                         </div>
@@ -218,43 +204,6 @@
         </div>
 
         <!-- MODAL BACKDROP -->
-        <div class="modal-backdrop fade show"></div>
-    @endif
-
-    <!-- DELETE CONFIRMATION MODAL -->
-    @if($showDeleteModal)
-        <div
-            class="modal modal-blur fade show"
-            style="display:block"
-            tabindex="-1"
-            wire:ignore.self
-        >
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-
-                    <div class="modal-header">
-                        <h5 class="modal-title">Delete Category</h5>
-                        <button type="button" class="btn-close" wire:click="cancelDelete"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <p class="mb-2">Are you sure you want to delete this category?</p>
-                        <p class="text-muted small mb-0">This action cannot be undone.</p>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="cancelDelete">
-                            Cancel
-                        </button>
-                        <button type="button" class="btn btn-danger" wire:click="delete">
-                            Delete
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
         <div class="modal-backdrop fade show"></div>
     @endif
 

@@ -8,22 +8,34 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductCategory extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'parent_id',
         'name',
         'slug',
         'description',
     ];
 
-    // parent category
-    public function parent()
+    /**
+     * Get the parent category.
+     */
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo(ProductCategory::class, 'parent_id');
+        return $this->belongsTo($this, 'parent_id');
     }
 
-    // child categories
-    public function children()
+    /**
+     * Get the child categories.
+     */
+    public function children(): HasMany
     {
-        return $this->hasMany(ProductCategory::class, 'parent_id');
+        return $this->hasMany($this, 'parent_id');
+    }
+
+    /**
+     * Get all descendants recursively.
+     */
+    public function allDescendants()
+    {
+        return $this->children()->with('allDescendants');
     }
 }

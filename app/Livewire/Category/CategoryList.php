@@ -3,11 +3,7 @@
 namespace App\Livewire\Category;
 
 use App\Models\ProductCategory;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
-use Illuminate\View\View;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,30 +11,36 @@ class CategoryList extends Component
 {
     use WithPagination;
 
-    public string $search = '';
-    public string $sortField = 'created_at';
-    public string $sortDirection = 'desc';
+    public $search = '';
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+    
+    // Modal states
+    public $showModal = false;
+    public $isEdit = false;
+    
+    // Form data
+    public $categoryId;
+    public $name = '';
+    public $slug = '';
+    public $description = '';
+    public $parentId = null;
 
-    protected $paginationTheme = 'bootstrap';
+    protected $rules = [
+        'name' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|unique:product_categories,slug',
+        'description' => 'nullable|string',
+        'parentId' => 'nullable|exists:product_categories,id',
+    ];
 
-    public bool $showModal = false;
-    public bool $isEdit = false;
-
-    public ?int $categoryId = null;
-    public string $name = '';
-    public string $slug = '';
-    public ?string $description = '';
-    public ?int $parentId = null;
-    public bool $isSubcategory = false;
-    public bool $showDeleteModal = false;
-    public ?int $deleteId = null;
-
-    public function updatedSearch(): void
+    public function updated($propertyName)
     {
-        $this->resetPage();
+        if ($propertyName === 'search') {
+            $this->resetPage();
+        }
     }
 
-    public function getCategories(): LengthAwarePaginator
+    public function getCategories()
     {
         return ProductCategory::query()
             ->when($this->search, function ($query) {
@@ -47,10 +49,10 @@ class CategoryList extends Component
                     ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate(3);
+            ->paginate(10);
     }
 
-    public function sort(string $field): void
+    public function sort($field)
     {
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -60,7 +62,7 @@ class CategoryList extends Component
         }
     }
 
-    public function openModal(?int $categoryId = null): void
+    public function openModal($categoryId = null)
     {
         if ($categoryId) {
             $category = ProductCategory::find($categoryId);
@@ -69,7 +71,6 @@ class CategoryList extends Component
             $this->slug = $category->slug;
             $this->description = $category->description;
             $this->parentId = $category->parent_id;
-            $this->isSubcategory = !is_null($category->parent_id);
             $this->isEdit = true;
         } else {
             $this->resetForm();
@@ -78,33 +79,24 @@ class CategoryList extends Component
         $this->showModal = true;
     }
 
-    public function closeModal(): void
+    public function closeModal()
     {
         $this->showModal = false;
         $this->resetForm();
     }
 
-    public function resetForm(): void
+    public function resetForm()
     {
         $this->categoryId = null;
         $this->name = '';
         $this->slug = '';
         $this->description = '';
         $this->parentId = null;
-        $this->isSubcategory = false;
         $this->resetErrorBag();
     }
-    public function updatedName(): void
-    {
-        $this->slug = Str::slug($this->name);
-    }
 
-    public function save(): void
+    public function save()
     {
-        if (!$this->isSubcategory) {
-            $this->parentId = null;
-        }
-
         $this->validate();
 
         if ($this->isEdit) {
@@ -131,53 +123,14 @@ class CategoryList extends Component
         $this->resetPage();
     }
 
-    public function confirmDelete(int $categoryId): void
+    public function delete($categoryId)
     {
-        $this->deleteId = $categoryId;
-        $this->showDeleteModal = true;
-    }
-
-    public function cancelDelete(): void
-    {
-        $this->showDeleteModal = false;
-        $this->deleteId = null;
-    }
-
-    public function delete(): void
-    {
-        if ($this->deleteId) {
-            ProductCategory::find($this->deleteId)?->delete();
-            $this->dispatch('notify', message: 'Category deleted successfully!', type: 'success');
-            $this->resetPage();
-        }
-
-        $this->cancelDelete();
-    }
-
-    protected function rules(): array
-    {
-        $slugRule = 'required|string|max:255|unique:product_categories,slug';
-
-        if ($this->isEdit && $this->categoryId) {
-            $slugRule .= ',' . $this->categoryId;
-        }
-
-        $parentRule = $this->isSubcategory
-            ? 'required|exists:product_categories,id'
-            : 'nullable|exists:product_categories,id';
-
-        return [
-            'name' => 'required|string|max:255',
-            'slug' => $slugRule,
-            'description' => 'nullable|string',
-            'parentId' => $parentRule,
-            'isSubcategory' => 'boolean',
-        ];
+        ProductCategory::find($categoryId)->delete();
+        $this->dispatch('notify', message: 'Category deleted successfully!', type: 'success');
     }
 
     #[Layout('layouts.admin')]
-    #[Title('Category Management')]
-    public function render(): View
+    public function render()
     {
         return view('livewire.category.category-list', [
             'categories' => $this->getCategories(),
