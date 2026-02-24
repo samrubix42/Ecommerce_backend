@@ -16,42 +16,42 @@ class ProductCategorySeeder extends Seeder
             [
                 'title' => 'Electronics',
                 'slug' => 'electronics',
-                'description' => 'All electronic devices and gadgets',
+                'meta_description' => 'All electronic devices and gadgets',
             ],
             [
                 'title' => 'Clothing',
                 'slug' => 'clothing',
-                'description' => 'Fashion and apparel products',
+                'meta_description' => 'Fashion and apparel products',
             ],
             [
                 'title' => 'Books',
                 'slug' => 'books',
-                'description' => 'Physical and digital books',
+                'meta_description' => 'Physical and digital books',
             ],
             [
                 'title' => 'Home & Garden',
                 'slug' => 'home-garden',
-                'description' => 'Home decor and gardening supplies',
+                'meta_description' => 'Home decor and gardening supplies',
             ],
             [
                 'title' => 'Sports & Outdoors',
                 'slug' => 'sports-outdoors',
-                'description' => 'Sports equipment and outdoor gear',
+                'meta_description' => 'Sports equipment and outdoor gear',
             ],
             [
                 'title' => 'Beauty & Personal Care',
                 'slug' => 'beauty-personal-care',
-                'description' => 'Cosmetics and personal care products',
+                'meta_description' => 'Cosmetics and personal care products',
             ],
             [
                 'title' => 'Toys & Games',
                 'slug' => 'toys-games',
-                'description' => 'Children toys and games',
+                'meta_description' => 'Children toys and games',
             ],
             [
                 'title' => 'Food & Beverages',
                 'slug' => 'food-beverages',
-                'description' => 'Food items and drinks',
+                'meta_description' => 'Food items and drinks',
             ],
         ];
 

@@ -21,7 +21,10 @@ class CategoryList extends Component
     public string $slug = '';
     public string $description = '';
     public bool $status = true;
+
+    public bool $isSubcategory = false; // 👈 NEW
     public ?int $parentId = null;
+
     public ?int $deleteId = null;
 
     protected function rules()
@@ -34,31 +37,9 @@ class CategoryList extends Component
         ];
     }
 
-    /* -------------------------
-        Modal handlers
-    --------------------------*/
-
-
-
-    public function confirmDelete($id)
-    {
-        $this->deleteId = $id;
-        $this->dispatch('open-delete-modal');
-    }
-
-    public function deleteConfirmed()
-    {
-        ProductCategory::findOrFail($this->deleteId)->delete();
-        $this->reset('deleteId');
-        $this->dispatch('toast-show', [
-            'message' => 'Category deleted successfully!',
-            'type' => 'success',
-            'position' => 'top-right',
-        ]);
-        $this->dispatch('close-delete-modal');
-        $this->resetPage();
-    }
-
+    /* =========================
+       Modal Handlers
+    ==========================*/
 
     public function openCreateModal()
     {
@@ -69,12 +50,17 @@ class CategoryList extends Component
     public function openEditModal(int $id)
     {
         $category = ProductCategory::findOrFail($id);
-        $this->categoryId = $category->id;
-        $this->name = $category->title;
-        $this->slug = $category->slug;
-        $this->description = $category->description;
-        $this->status = (bool)($category->status ?? true);
-        $this->parentId = $category->parent_id;
+
+        $this->categoryId   = $category->id;
+        $this->name         = $category->title;
+        $this->slug         = $category->slug;
+        $this->description  = $category->description;
+        $this->status       = (bool) ($category->status ?? true);
+        $this->parentId     = $category->parent_id;
+
+        // 👇 Automatically check if it has parent
+        $this->isSubcategory = $category->parent_id ? true : false;
+
         $this->dispatch('open-modal');
     }
 
@@ -83,27 +69,28 @@ class CategoryList extends Component
         $this->dispatch('close-modal');
         $this->resetForm();
     }
-        // Fetch paginated categories for the view
-    public function getCategories()
-    {
-        return ProductCategory::query()
-            ->when($this->search, function ($query) {
-                $query->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('slug', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
-            })
-            ->orderByDesc('created_at')
-            ->paginate(10);
-    }
 
-    /* -------------------------
-        CRUD
-    --------------------------*/
+    /* =========================
+       Livewire Watchers
+    ==========================*/
+
+    public function updatedIsSubcategory($value)
+    {
+        // If unchecked → remove parent
+        if (!$value) {
+            $this->parentId = null;
+        }
+    }
 
     public function updatedName()
     {
         $this->slug = Str::slug($this->name);
     }
+
+    /* =========================
+       CRUD
+    ==========================*/
+
     public function save()
     {
         $this->validate();
@@ -111,11 +98,11 @@ class CategoryList extends Component
         ProductCategory::updateOrCreate(
             ['id' => $this->categoryId],
             [
-                'parent_id' => $this->parentId ?: null,
-                'title' => $this->name,
-                'slug' => $this->slug,
+                'parent_id'   => $this->isSubcategory ? $this->parentId : null,
+                'title'       => $this->name,
+                'slug'        => $this->slug,
                 'description' => $this->description,
-                'status' => $this->status,
+                'status'      => $this->status,
             ]
         );
 
@@ -128,23 +115,73 @@ class CategoryList extends Component
         $this->closeModal();
     }
 
-    public function delete(int $id)
+    public function confirmDelete($id)
     {
-        ProductCategory::findOrFail($id)->delete();
+        $this->deleteId = $id;
+        $this->dispatch('open-delete-modal');
+    }
+
+    public function deleteConfirmed()
+    {
+        ProductCategory::findOrFail($this->deleteId)->delete();
+
+        $this->reset('deleteId');
+
         $this->dispatch('toast-show', [
             'message' => 'Category deleted successfully!',
             'type' => 'success',
             'position' => 'top-right',
         ]);
+
         $this->dispatch('close-delete-modal');
+
+        $this->resetPage();
+    }
+
+    public function delete(int $id)
+    {
+        ProductCategory::findOrFail($id)->delete();
+
+        $this->dispatch('toast-show', [
+            'message' => 'Category deleted successfully!',
+            'type' => 'success',
+            'position' => 'top-right',
+        ]);
+
         $this->resetPage();
     }
 
     public function resetForm()
     {
-        $this->reset(['categoryId', 'name', 'slug', 'description', 'status', 'parentId']);
+        $this->reset([
+            'categoryId',
+            'name',
+            'slug',
+            'description',
+            'status',
+            'parentId',
+            'isSubcategory'
+        ]);
+
         $this->status = true;
+        $this->isSubcategory = false;
         $this->parentId = null;
+    }
+
+    /* =========================
+       Data Fetch
+    ==========================*/
+
+    public function getCategories()
+    {
+        return ProductCategory::query()
+            ->when($this->search, function ($query) {
+                $query->where('title', 'like', '%' . $this->search . '%')
+                    ->orWhere('slug', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%');
+            })
+            ->orderByDesc('created_at')
+            ->paginate(10);
     }
 
     #[Layout('layouts.admin')]
@@ -153,7 +190,6 @@ class CategoryList extends Component
         return view('livewire.category.category-list', [
             'categories' => $this->getCategories(),
             'parentCategories' => ProductCategory::whereNull('parent_id')->get(),
-            'categoryId' => $this->categoryId,
         ]);
     }
 }
