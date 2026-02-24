@@ -6,20 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductImage extends Model
 {
-    protected $fillable = [
-        'imageable_id',
-        'imageable_type',
-        'image_path',
-        'is_primary',
-        'sort_order',
-    ];
+   protected $fillable = [
+    'product_id',
+    'product_variant_id',
+    'image_path',
+    'is_primary',
+    'sort_order'
+];
 
     protected $casts = [
         'is_primary' => 'boolean',
     ];
 
-    public function imageable()
+      public function product()
     {
-        return $this->morphTo();
+        return $this->belongsTo(Product::class);
+    }
+
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 }

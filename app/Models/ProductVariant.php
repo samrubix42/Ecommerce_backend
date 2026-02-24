@@ -50,8 +50,8 @@ class ProductVariant extends Model
         return $this->hasMany(VariantAttribute::class, 'product_variant_id');
     }
 
-    public function images()
-    {
-        return $this->morphMany(ProductImage::class, 'imageable');
-    }
+   public function images()
+{
+    return $this->hasMany(ProductImage::class);
+}
 }

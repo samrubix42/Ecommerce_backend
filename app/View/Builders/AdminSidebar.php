@@ -38,7 +38,7 @@ class AdminSidebar
                 (object) [
                     'title' => 'Products',
                     'icon' => 'ri-product-hunt-line',
-                    'url' => 'javascript:void(0)', // No direct URL, it's a parent menu
+                    'url' => 'javascript:void(0)',
                     'hasSubmenu' => true,
                     'submenu' => [
                      
@@ -46,6 +46,11 @@ class AdminSidebar
                             'title' => 'Manage Attributes',
                             'icon' => 'ri-list-check',
                             'url' => route('admin.attributes'),
+                        ],
+                        (object) [
+                            'title' => 'Add Product',
+                            'icon' => 'ri-add-line',
+                            'url' => route('admin.add-product'),
                         ],
                     ],
                 ],

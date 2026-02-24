@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\Dashboard\Dashboard;
+use App\Livewire\Admin\Product\AddProduct;
 use App\Livewire\Admin\Product\ManageAttributeValue;
 use App\Livewire\Category\CategoryList;
 use Illuminate\Support\Facades\Auth;
@@ -15,8 +16,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ->name('admin.dashboard');
     Route::livewire('categories', CategoryList::class)
         ->name('admin.categories');
-        Route::livewire('attributes',ManageAttributeValue::class)
-            ->name('admin.attributes');
+    Route::livewire('attributes', ManageAttributeValue::class)
+        ->name('admin.attributes');
+    Route::livewire('add-product',AddProduct::class)
+        ->name('admin.add-product');
 });
 
 Route::livewire('login', \App\Livewire\Auth\Login::class)
