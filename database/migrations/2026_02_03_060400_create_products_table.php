@@ -13,16 +13,19 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained('product_categories')
-                ->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('product_categories')->nullOnDelete();
+            $table->foreignId('brand_id')->nullable()->constrained()->nullOnDelete();
+
             $table->string('name');
             $table->string('slug')->unique();
-            $table->text('description')->nullable();
+            $table->text('short_description')->nullable();
+            $table->longText('description')->nullable();
 
             $table->boolean('has_variants')->default(false);
-            $table->tinyInteger('status')->default(1);
+            $table->boolean('is_featured')->default(false);
+            $table->boolean('is_digital')->default(false);
+
+            $table->enum('status', ['draft', 'active', 'inactive'])->default('draft');
 
             $table->timestamps();
             $table->softDeletes();

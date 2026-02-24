@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attributes', function (Blueprint $table) {
+        Schema::create('product_images', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Color, Size
-            $table->string('slug')->unique();
-            $table->boolean('status')->default(true);
 
+            $table->morphs('imageable'); 
+
+            $table->string('image_path');
+            $table->boolean('is_primary')->default(false);
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attributes');
+        Schema::dropIfExists('product_images');
     }
 };

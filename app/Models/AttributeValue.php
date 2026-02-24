@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AttributeValue extends Model
 {
-     protected $fillable = ['attribute_id','value'];
+     use SoftDeletes;
+     
+    protected $fillable = ['attribute_id', 'value'];
 
     public function attribute()
     {

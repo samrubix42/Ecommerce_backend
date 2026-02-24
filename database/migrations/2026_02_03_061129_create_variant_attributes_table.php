@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('variant_attributes', function (Blueprint $table) {
             $table->id();
-
             $table->foreignId('product_variant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('attribute_id')->constrained()->cascadeOnDelete();
             $table->foreignId('attribute_value_id')->constrained()->cascadeOnDelete();
@@ -21,7 +20,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['product_variant_id', 'attribute_id']);
-            $table->index('attribute_id');
         });
     }
 

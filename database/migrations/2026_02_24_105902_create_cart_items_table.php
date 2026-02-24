@@ -11,14 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attributes', function (Blueprint $table) {
+        Schema::create('cart_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Color, Size
-            $table->string('slug')->unique();
-            $table->boolean('status')->default(true);
+
+            $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_variant_id')->constrained()->cascadeOnDelete();
+
+            $table->integer('quantity');
 
             $table->timestamps();
-            $table->softDeletes();
+
+            $table->unique(['cart_id', 'product_variant_id']);
+            $table->timestamps();
         });
     }
 
@@ -27,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attributes');
+        Schema::dropIfExists('cart_items');
     }
 };

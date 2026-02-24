@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LoginSeeder::class,
             ProductCategorySeeder::class,
+            AttributeSeeder::class,
         ]);
     }
 }

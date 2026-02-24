@@ -13,18 +13,28 @@ return new class extends Migration
     {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
 
             $table->string('sku')->unique();
-            $table->decimal('price', 10, 2);
-            $table->decimal('sale_price', 10, 2)->nullable();
+            $table->string('barcode')->nullable();
+
+            $table->decimal('price', 12, 2);
+            $table->decimal('sale_price', 12, 2)->nullable();
+            $table->decimal('cost_price', 12, 2)->nullable(); // profit tracking
 
             $table->integer('stock')->default(0);
+            $table->integer('low_stock_alert')->default(5);
 
-            // 0 = inactive, 1 = active
-            $table->tinyInteger('status')->default(1);
+            $table->decimal('weight', 8, 2)->nullable();
+            $table->json('dimensions')->nullable(); // height, width, length
+
+            $table->boolean('is_default')->default(false);
+            $table->boolean('status')->default(true);
 
             $table->timestamps();
+            $table->softDeletes();
+
             $table->index('product_id');
         });
     }
