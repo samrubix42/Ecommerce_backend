@@ -66,7 +66,7 @@ class CategoryList extends Component
         $this->categoryId   = $category->id;
         $this->name         = $category->title;
         $this->slug         = $category->slug;
-        $this->description  = $category->description;
+        $this->description  = $category->description ?? '';
         $this->status       = (bool) ($category->status ?? true);
         $this->parentId     = $category->parent_id;
 

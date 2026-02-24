@@ -19,178 +19,138 @@
                 x-show="modalOpen"
                 x-transition
                 x-trap.inert.noscroll="modalOpen"
-                class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                class="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
             >
 
                 <!-- Header -->
-                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-slate-900">
+                <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between bg-white">
+                    <h3 class="text-base font-semibold text-slate-800">
                         {{ $categoryId ? 'Edit Category' : 'Add Category' }}
                     </h3>
 
                     <button @click="modalOpen=false"
                             class="text-slate-400 hover:text-slate-600 transition">
-                        <i class="ri-close-line text-xl"></i>
+                        <i class="ri-close-line text-lg"></i>
                     </button>
                 </div>
 
                 <!-- Body -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-8">
+                <div class="flex-1 overflow-y-auto px-5 py-4 space-y-6 text-sm">
 
-                    <!-- ========== BASIC INFO ========== -->
-                    <div class="space-y-6">
+                    <!-- Grid Layout -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-                        <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                            Basic Information
-                        </h4>
+                        <!-- Image -->
+                        <div class="space-y-2">
+                            <label class="text-xs font-medium text-slate-600">Image</label>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <!-- Image -->
-                            <div class="space-y-3">
-                                <label class="text-xs font-medium text-slate-600">Category Image</label>
-
-                                <div class="flex items-center gap-4">
-
-                                    <div class="w-24 h-24 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
-
-                                        @if($image)
-                                            <img src="{{ $image->temporaryUrl() }}"
-                                                 class="object-cover w-full h-full">
-                                        @elseif($existingImage)
-                                            <img src="{{ asset('storage/' . $existingImage) }}"
-                                                 class="object-cover w-full h-full">
-                                        @else
-                                            <i class="ri-image-line text-3xl text-slate-300"></i>
-                                        @endif
-
-                                    </div>
-
-                                    <div class="flex-1">
-                                        <input type="file"
-                                               wire:model="image"
-                                               accept="image/*"
-                                               class="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none w-full ">
-
-                                        @error('image')
-                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                        @enderror
-
-                                        <p class="text-xs text-slate-400 mt-2">
-                                            JPG or PNG. Max 2MB.
-                                        </p>
-
-                                        <div wire:loading
-                                             wire:target="image"
-                                             class="text-xs text-blue-600 mt-2">
-                                            Uploading...
-                                        </div>
-                                    </div>
-
-                                </div>
+                            <div class="w-full h-28 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                                @if($image)
+                                    <img src="{{ $image->temporaryUrl() }}" class="object-cover w-full h-full">
+                                @elseif($existingImage)
+                                    <img src="{{ asset('storage/' . $existingImage) }}" class="object-cover w-full h-full">
+                                @else
+                                    <i class="ri-image-line text-2xl text-slate-300"></i>
+                                @endif
                             </div>
 
-                            <!-- Name + Slug -->
-                            <div class="space-y-4">
+                            <input type="file"
+                                   wire:model="image"
+                                   accept="image/*"
+                                   class="w-full text-xs border border-slate-300 rounded-md px-2 py-1.5 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
 
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Name</label>
-                                    <input wire:model.live="name"
-                                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                                  focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
-                                    @error('name')
-                                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Slug</label>
-                                    <input wire:model="slug"
-                                           class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                                  focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
-                                    @error('slug')
-                                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                            </div>
-
+                            @error('image')
+                                <p class="text-xs text-red-500">{{ $message }}</p>
+                            @enderror
                         </div>
 
-                        <!-- Description -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Description</label>
-                            <textarea wire:model="description"
-                                      rows="3"
-                                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                             focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none"></textarea>
-                        </div>
+                        <!-- Fields -->
+                        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                        <!-- Checkboxes -->
-                        <div class="flex items-center gap-8 pt-2">
-                            <label class="flex items-center gap-2 text-sm text-slate-700">
-                                <input type="checkbox"
-                                       wire:model.live="isSubcategory"
-                                       class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                Is Subcategory
-                            </label>
-
-                            <label class="flex items-center gap-2 text-sm text-slate-700">
-                                <input type="checkbox"
-                                       wire:model="status"
-                                       class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                Active
-                            </label>
-                        </div>
-
-                        @if($isSubcategory)
                             <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">
-                                    Parent Category
-                                </label>
-                                <select wire:model="parentId"
-                                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                               focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
-                                    <option value="">Select Parent Category</option>
-                                    @foreach($parentCategories as $parent)
-                                        <option value="{{ $parent->id }}">{{ $parent->title }}</option>
-                                    @endforeach
-                                </select>
+                                <label class="text-xs font-medium text-slate-600">Name</label>
+                                <input wire:model.live="name"
+                                       class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                                @error('name')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
-                        @endif
 
+                            <div>
+                                <label class="text-xs font-medium text-slate-600">Slug</label>
+                                <input wire:model="slug"
+                                       class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                                @error('slug')
+                                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="text-xs font-medium text-slate-600">Description</label>
+                                <textarea wire:model="description"
+                                          rows="2"
+                                          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                                 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none"></textarea>
+                            </div>
+
+                            <!-- Toggles -->
+                            <div class="sm:col-span-2 flex items-center gap-6 pt-1">
+                                <label class="flex items-center gap-2 text-xs text-slate-700">
+                                    <input type="checkbox"
+                                           wire:model.live="isSubcategory"
+                                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    Subcategory
+                                </label>
+
+                                <label class="flex items-center gap-2 text-xs text-slate-700">
+                                    <input type="checkbox"
+                                           wire:model="status"
+                                           class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    Active
+                                </label>
+                            </div>
+
+                            @if($isSubcategory)
+                                <div class="sm:col-span-2">
+                                    <label class="text-xs font-medium text-slate-600">Parent Category</label>
+                                    <select wire:model="parentId"
+                                            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                                   focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                                        <option value="">Select Parent</option>
+                                        @foreach($parentCategories as $parent)
+                                            <option value="{{ $parent->id }}">{{ $parent->title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+
+                        </div>
                     </div>
 
-                    <!-- ========== SEO SECTION ========== -->
-                    <div class="space-y-6 border-t border-slate-200 pt-6">
+                    <!-- SEO -->
+                    <div class="border-t border-slate-200 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                        <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                            SEO Settings
-                        </h4>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Meta Title</label>
-                                <input wire:model="meta_title"
-                                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Meta Keywords</label>
-                                <input wire:model="meta_keywords"
-                                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
-                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
-                            </div>
-
+                        <div>
+                            <label class="text-xs font-medium text-slate-600">Meta Title</label>
+                            <input wire:model="meta_title"
+                                   class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                          focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Meta Description</label>
+                            <label class="text-xs font-medium text-slate-600">Meta Keywords</label>
+                            <input wire:model="meta_keywords"
+                                   class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
+                                          focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="text-xs font-medium text-slate-600">Meta Description</label>
                             <textarea wire:model="meta_description"
                                       rows="2"
-                                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm
+                                      class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5
                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none"></textarea>
                         </div>
 
@@ -199,16 +159,50 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+                <div class="px-5 py-3 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
 
-                    <button @click="modalOpen=false"
-                            class="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-100 transition">
+                    <!-- Cancel -->
+                    <button
+                        @click="modalOpen=false"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                               rounded-lg border border-slate-300 text-slate-600
+                               hover:bg-slate-100 transition">
+
+                        <i class="ri-close-line text-base"></i>
                         Cancel
                     </button>
 
-                    <button wire:click="save"
-                            class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm">
-                        Save Category
+                    <!-- Save -->
+                    <button
+                        wire:click="save"
+                        wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium
+                               rounded-lg bg-gradient-to-r from-blue-600 to-blue-700
+                               text-white shadow-md hover:shadow-lg
+                               hover:from-blue-700 hover:to-blue-800
+                               transition-all duration-200
+                               disabled:opacity-60 disabled:cursor-not-allowed">
+
+                        <!-- Spinner -->
+                        <svg wire:loading wire:target="save"
+                             class="animate-spin h-4 w-4 text-white"
+                             xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24">
+                            <circle class="opacity-25"
+                                    cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+
+                        <i wire:loading.remove wire:target="save"
+                           class="ri-save-line text-base"></i>
+
+                        <span wire:loading.remove wire:target="save">Save Category</span>
+                        <span wire:loading wire:target="save">Saving...</span>
+
                     </button>
 
                 </div>
