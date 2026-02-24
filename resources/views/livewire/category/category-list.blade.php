@@ -40,119 +40,108 @@
         <table class="min-w-full text-sm">
 
             <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                    <tr>
-                        <th class="px-6 py-4 text-left">Category</th>
-                        <th class="px-6 py-4 text-left">Image</th>
-                        <th class="px-6 py-4 text-left">Slug</th>
-                        <th class="px-6 py-4 text-left">Status</th>
-                        <th class="px-6 py-4 text-right w-40">Actions</th>
-                    </tr>
+                <tr>
+                    <th class="px-4 py-4 w-10"></th>
+                    <th class="px-6 py-4 text-left">Category</th>
+                    <th class="px-6 py-4 text-left">Image</th>
+                    <th class="px-6 py-4 text-left">Slug</th>
+                    <th class="px-6 py-4 text-left">Status</th>
+                    <th class="px-6 py-4 text-right w-40">Actions</th>
+                </tr>
             </thead>
 
-            <tbody class="divide-y divide-slate-100">
+            <tbody wire:sort="handleCategorySort"
+                class="divide-y divide-slate-100">
 
-                @forelse($categories as $category)
+                @foreach($categories as $category)
 
-                    <tr wire:key="category-{{ $category->id }}"
-                        class="hover:bg-slate-50 transition">
+                <tr wire:key="category-{{ $category->id }}"
+                    wire:sort:item="{{ $category->id }}"
+                    class="hover:bg-slate-50 transition">
 
-                        <!-- Category -->
-                        <td class="px-6 py-5">
-                            <div class="flex items-start gap-4">
+                    <!-- Drag Handle -->
+                    <td class="px-4 py-5 text-slate-400">
+                        <span wire:sort:handle
+                            class="cursor-move hover:text-slate-600">
+                            ☰
+                        </span>
+                    </td>
 
-                                <!-- Icon -->
-                                <div class="h-9 w-9 flex items-center justify-center rounded-md
-                                    {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
-                                    <i class="ri-folder-3-line text-base"></i>
-                                </div>
+                    <!-- Category -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-start gap-4">
 
-                                <div>
-                                    <p class="font-medium text-slate-900">
-                                        {{ $category->title }}
-                                    </p>
-
-                                    @if($category->parent)
-                                        <p class="text-xs text-slate-400 mt-1">
-                                            Subcategory of
-                                            <span class="font-medium text-slate-600">
-                                                {{ $category->parent->title }}
-                                            </span>
-                                        </p>
-                                    @endif
-                                </div>
-
+                            <div class="h-9 w-9 flex items-center justify-center rounded-md
+                            {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
+                                <i class="ri-folder-3-line text-base"></i>
                             </div>
-                        </td>
 
-                        <!-- Image -->
-                        <td class="px-6 py-5">
-                            @if($category->image)
-                                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->title }}" class="h-10 w-10 rounded-md object-cover">
-                            @else
-                                <div class="h-10 w-10 rounded-md bg-slate-50 flex items-center justify-center text-slate-300">
-                                    <i class="ri-image-line"></i>
-                                </div>
-                            @endif
-                        </td>
-                                </div>
+                            <div>
+                                <p class="font-medium text-slate-900">
+                                    {{ $category->title }}
+                                </p>
 
+                                @if($category->parent)
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Subcategory of
+                                    <span class="font-medium text-slate-600">
+                                        {{ $category->parent->title }}
+                                    </span>
+                                </p>
+                                @endif
                             </div>
-                        </td>
 
-                        <!-- Slug -->
-                        <td class="px-6 py-5 text-slate-500 font-mono text-xs">
-                            {{ $category->slug }}
-                        </td>
+                        </div>
+                    </td>
 
-                        <!-- Status -->
-                        <td class="px-6 py-5">
-                            @if($category->status)
-                                <span class="inline-flex items-center gap-2 text-xs font-medium text-emerald-600">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    Active
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-2 text-xs font-medium text-rose-600">
-                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                                    Inactive
-                                </span>
-                            @endif
-                        </td>
+                    <!-- Image -->
+                    <td class="px-6 py-5">
+                        @if($category->image)
+                        <img src="{{ asset('storage/' . $category->image) }}"
+                            class="h-10 w-10 rounded-md object-cover">
+                        @else
+                        <div class="h-10 w-10 rounded-md bg-slate-50 flex items-center justify-center text-slate-300">
+                            <i class="ri-image-line"></i>
+                        </div>
+                        @endif
+                    </td>
 
-                        <!-- Actions -->
-                        <td class="px-6 py-5 text-right">
-                            <div class="flex justify-end gap-2">
+                    <!-- Slug -->
+                    <td class="px-6 py-5 text-slate-500 font-mono text-xs">
+                        {{ $category->slug }}
+                    </td>
 
-                                <button
-                                    @click="$dispatch('open-modal'); $wire.openEditModal({{ $category->id }})"
-                                    class="inline-flex items-center gap-1 rounded-md
-                                           bg-blue-50 text-blue-600 px-3 py-1.5 text-xs font-medium
-                                           hover:bg-blue-100 transition">
-                                    <i class="ri-edit-line text-sm"></i>
-                                    Edit
-                                </button>
+                    <!-- Status -->
+                    <td class="px-6 py-5">
+                        @if($category->status)
+                        <span class="text-emerald-600 text-xs font-medium">Active</span>
+                        @else
+                        <span class="text-rose-600 text-xs font-medium">Inactive</span>
+                        @endif
+                    </td>
 
-                                <button
-                                    @click="$dispatch('open-delete-modal'); $wire.confirmDelete({{ $category->id }})"
-                                    class="inline-flex items-center gap-1 rounded-md
-                                           bg-rose-50 text-rose-600 px-3 py-1.5 text-xs font-medium
-                                           hover:bg-rose-100 transition">
-                                    <i class="ri-delete-bin-6-line text-sm"></i>
-                                    Delete
-                                </button>
+                    <!-- Actions (Ignore Drag) -->
+                    <td class="px-6 py-5 text-right">
+                        <div wire:sort:ignore class="flex justify-end gap-2">
 
-                            </div>
-                        </td>
+                            <button
+                                 @click="$dispatch('open-modal'); $wire.openEditModal({{ $category->id }})"
+                                class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md text-xs">
+                                Edit
+                            </button>
 
-                    </tr>
+                            <button
+                        @click="$dispatch('open-delete-modal'); $wire.confirmDelete({{ $category->id }})"
+                                class="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-md text-xs">
+                                Delete
+                            </button>
 
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
-                            No categories found.
-                        </td>
-                    </tr>
-                @endforelse
+                        </div>
+                    </td>
+
+                </tr>
+
+                @endforeach
 
             </tbody>
 
@@ -165,85 +154,81 @@
 
         @forelse($categories as $category)
 
-              <div wire:key="mobile-category-{{ $category->id }}"
-                  class="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
+        <div wire:key="mobile-category-{{ $category->id }}"
+            class="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
 
-                <div class="flex items-start gap-3">
+            <div class="flex items-start gap-3">
 
 
-                    <div class="h-9 w-9 flex items-center justify-center rounded-md overflow-hidden">
-                        @if($category->image)
-                            <img src="{{ asset('storage/' . $category->image) }}" class="object-cover w-full h-full" alt="{{ $category->title }}">
-                        @else
-                            <div class="h-9 w-9 flex items-center justify-center rounded-md {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
-                                <i class="ri-folder-3-line text-base"></i>
-                            </div>
-                        @endif
+                <div class="h-9 w-9 flex items-center justify-center rounded-md overflow-hidden">
+                    @if($category->image)
+                    <img src="{{ asset('storage/' . $category->image) }}" class="object-cover w-full h-full" alt="{{ $category->title }}">
+                    @else
+                    <div class="h-9 w-9 flex items-center justify-center rounded-md {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
+                        <i class="ri-folder-3-line text-base"></i>
                     </div>
-
-                    <div class="flex-1">
-                        <p class="font-medium text-slate-900">
-                            {{ $category->title }}
-                        </p>
-
-                        @if($category->parent)
-                            <p class="text-xs text-slate-400 mt-1">
-                                Subcategory of
-                                <span class="font-medium text-slate-600">
-                                    {{ $category->parent->title }}
-                                </span>
-                            </p>
-                        @endif
-
-                        <p class="text-xs text-slate-400 font-mono mt-2 break-all">
-                            {{ $category->slug }}
-                        </p>
-                    </div>
-
+                    @endif
                 </div>
 
-                <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <p class="font-medium text-slate-900">
+                        {{ $category->title }}
+                    </p>
 
-                    @if($category->status)
-                        <span class="text-xs font-medium text-emerald-600">Active</span>
-                    @else
-                        <span class="text-xs font-medium text-rose-600">Inactive</span>
+                    @if($category->parent)
+                    <p class="text-xs text-slate-400 mt-1">
+                        Subcategory of
+                        <span class="font-medium text-slate-600">
+                            {{ $category->parent->title }}
+                        </span>
+                    </p>
                     @endif
 
-                    <div class="flex gap-2">
+                    <p class="text-xs text-slate-400 font-mono mt-2 break-all">
+                        {{ $category->slug }}
+                    </p>
+                </div>
 
-                        <button
-                            @click="$dispatch('open-modal'); $wire.openEditModal({{ $category->id }})"
-                            class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md text-xs font-medium">
-                            Edit
-                        </button>
+            </div>
 
-                        <button
-                            @click="$dispatch('open-delete-modal'); $wire.confirmDelete({{ $category->id }})"
-                            class="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-md text-xs font-medium">
-                            Delete
-                        </button>
+            <div class="flex items-center justify-between">
 
-                    </div>
+                @if($category->status)
+                <span class="text-xs font-medium text-emerald-600">Active</span>
+                @else
+                <span class="text-xs font-medium text-rose-600">Inactive</span>
+                @endif
+
+                <div class="flex gap-2">
+
+                    <button
+                        @click="$dispatch('open-modal'); $wire.openEditModal({{ $category->id }})"
+                        class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md text-xs font-medium">
+                        Edit
+                    </button>
+
+                    <button
+                        @click="$dispatch('open-delete-modal'); $wire.confirmDelete({{ $category->id }})"
+                        class="bg-rose-50 text-rose-600 px-3 py-1.5 rounded-md text-xs font-medium">
+                        Delete
+                    </button>
 
                 </div>
 
             </div>
+
+        </div>
 
         @empty
 
-            <div class="rounded-md border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-slate-400">
-                No categories found.
-            </div>
+        <div class="rounded-md border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-slate-400">
+            No categories found.
+        </div>
 
         @endforelse
 
     </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-end">
-        {{ $categories->links() }}
-    </div>
 
     @include('livewire.category.category-modal')
     @include('livewire.category.delete')

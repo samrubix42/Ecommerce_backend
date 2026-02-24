@@ -26,6 +26,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('meta_keywords')->nullable();
             $table->text('meta_description')->nullable();
+            $table->integer('sort_order')->default(0);
             $table->boolean('status')->default(true);
 
             $table->timestamps();

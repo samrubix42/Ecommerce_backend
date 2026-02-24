@@ -7,63 +7,50 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-     use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
-        'name','slug','description','status','has_variants'
+        'product_id',
+        'sku',
+        'barcode',
+        'price',
+        'sale_price',
+        'cost_price',
+        'stock',
+        'low_stock_alert',
+        'weight',
+        'dimensions',
+        'is_default',
+        'status',
     ];
 
-    public function variants()
+    protected $casts = [
+        'price' => 'decimal:2',
+        'sale_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'dimensions' => 'array',
+        'is_default' => 'boolean',
+        'status' => 'boolean',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function product()
     {
-        return $this->hasMany(ProductVariant::class);
+        return $this->belongsTo(Product::class);
     }
 
-     public function scopeApplyFilters($query, array $filters)
+    public function attributes()
     {
-        foreach ($filters as $key => $value) {
+        return $this->hasMany(VariantAttribute::class, 'product_variant_id');
+    }
 
-            // skip empty filters
-            if ($value === null || $value === '') {
-                continue;
-            }
-
-            // price filters (variant level)
-            if ($key === 'price_min') {
-                $query->whereHas('variants', fn ($q) =>
-                    $q->where('price', '>=', $value)
-                );
-                continue;
-            }
-
-            if ($key === 'price_max') {
-                $query->whereHas('variants', fn ($q) =>
-                    $q->where('price', '<=', $value)
-                );
-                continue;
-            }
-
-            // attribute filters
-            $attribute = Attribute::where('name', ucfirst($key))->first();
-
-            if (!$attribute) {
-                continue;
-            }
-
-            $query->whereHas('variants.attributes', function ($q) use ($attribute, $value) {
-
-                $operator = is_array($value) && isset($value['op'])
-                    ? $value['op']
-                    : '=';
-
-                $filterValue = is_array($value)
-                    ? $value['value']
-                    : $value;
-
-                $q->where('attribute_id', $attribute->id)
-                  ->filterByType($attribute, $operator, $filterValue);
-            });
-        }
-
-        return $query;
+    public function images()
+    {
+        return $this->morphMany(ProductImage::class, 'imageable');
     }
 }

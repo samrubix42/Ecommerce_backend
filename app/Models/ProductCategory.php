@@ -17,8 +17,9 @@ class ProductCategory extends Model
         'image',
         'meta_title',
         'meta_keywords',
+        'sort_order',
         'meta_description',
-        
+
     ];
 
     /**

@@ -7,8 +7,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attribute extends Model
 {
+   
     use SoftDeletes;
-    protected $fillable = ['name', 'type'];
+
+    protected $fillable = [
+        'name',
+        'slug',
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
+    ];
 
     public function values()
     {

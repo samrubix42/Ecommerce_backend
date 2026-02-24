@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['cart_id', 'product_variant_id']);
-            $table->timestamps();
+   
         });
     }
 

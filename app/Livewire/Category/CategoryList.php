@@ -24,7 +24,7 @@ class CategoryList extends Component
     public string $description = '';
     public bool $status = true;
 
-    public bool $isSubcategory = false; // 👈 NEW
+    public bool $isSubcategory = false; 
     public ?int $parentId = null;
 
     public string $meta_title = '';
@@ -70,15 +70,15 @@ class CategoryList extends Component
         $this->status       = (bool) ($category->status ?? true);
         $this->parentId     = $category->parent_id;
 
-        // existing image path (storage disk)
+       
         $this->existingImage = $category->image;
 
-        // populate meta fields
+    
         $this->meta_title = $category->meta_title ?? '';
         $this->meta_keywords = $category->meta_keywords ?? '';
         $this->meta_description = $category->meta_description ?? '';
 
-        // 👇 Automatically check if it has parent
+      
         $this->isSubcategory = $category->parent_id ? true : false;
 
         $this->dispatch('open-modal');
@@ -96,10 +96,33 @@ class CategoryList extends Component
 
     public function updatedIsSubcategory($value)
     {
-        // If unchecked → remove parent
+   
         if (!$value) {
             $this->parentId = null;
         }
+    }
+    public function handleCategorySort($id, $position)
+    {
+        $categories = ProductCategory::orderBy('sort_order')->get();
+
+        $movedItem = $categories->firstWhere('id', $id);
+
+        if (!$movedItem) return;
+
+        $categories = $categories->reject(fn($item) => $item->id == $id)
+            ->values();
+
+        $categories->splice($position, 0, [$movedItem]);
+
+        foreach ($categories as $index => $category) {
+            $category->update(['sort_order' => $index]);
+        }
+
+        $this->dispatch('toast-show', [
+            'message' => 'Category Reordered',
+            'type' => 'success',
+            'position' => 'top-right',
+        ]);
     }
 
     public function updatedName()
@@ -107,18 +130,14 @@ class CategoryList extends Component
         $this->slug = Str::slug($this->name);
     }
 
-    /* =========================
-       CRUD
-    ==========================*/
+
 
     public function save()
     {
         $this->validate();
 
-        // determine existing category (if updating)
         $existing = $this->categoryId ? ProductCategory::find($this->categoryId) : null;
 
-        // handle image upload
         $imagePath = $existing->image ?? null;
         if ($this->image) {
             // delete old image if exists
@@ -211,22 +230,21 @@ class CategoryList extends Component
         $this->parentId = null;
     }
 
-    /* =========================
-       Data Fetch
-    ==========================*/
+
 
     public function getCategories()
     {
         return ProductCategory::query()
             ->when($this->search, function ($query) {
-                $query->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('slug', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
+                $query->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->search . '%')
+                        ->orWhere('slug', 'like', '%' . $this->search . '%')
+                        ->orWhere('description', 'like', '%' . $this->search . '%');
+                });
             })
-            ->orderByDesc('created_at')
-            ->paginate(10);
+            ->orderBy('sort_order')
+            ->get(); 
     }
-
     #[Layout('layouts.admin')]
     public function render()
     {

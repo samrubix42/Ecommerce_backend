@@ -8,8 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class AttributeValue extends Model
 {
      use SoftDeletes;
-     
-    protected $fillable = ['attribute_id', 'value'];
+
+    protected $fillable = [
+        'attribute_id',
+        'value',
+        'slug',
+    ];
 
     public function attribute()
     {
