@@ -9,10 +9,15 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     @livewireStyles
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body>
-    <div x-data="{ sidebarOpen:false }" class="flex h-screen bg-gray-100">
+    <div x-data="{ sidebarOpen:false } " x-cloak class="flex h-screen bg-gray-100">
 
         <livewire:admin.include.sidebar />
 
@@ -29,8 +34,8 @@
 
     <script src="{{ asset('tinymce/tinymce.js') }}"></script>
     <script>
-        document.addEventListener('livewire:navigate', function () {
-            Livewire.hook('message.processed', function (message, component) {
+        document.addEventListener('livewire:navigate', function() {
+            Livewire.hook('message.processed', function(message, component) {
                 if (message.updateQueue.some(update => update.type === 'callMethod' && update.method === 'initializeEditor')) {
                     tinymce.remove(); // Remove any existing editors
                     tinymce.init({

@@ -40,12 +40,13 @@
         <table class="min-w-full text-sm">
 
             <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                <tr>
-                    <th class="px-6 py-4 text-left">Category</th>
-                    <th class="px-6 py-4 text-left">Slug</th>
-                    <th class="px-6 py-4 text-left">Status</th>
-                    <th class="px-6 py-4 text-right w-40">Actions</th>
-                </tr>
+                    <tr>
+                        <th class="px-6 py-4 text-left">Category</th>
+                        <th class="px-6 py-4 text-left">Image</th>
+                        <th class="px-6 py-4 text-left">Slug</th>
+                        <th class="px-6 py-4 text-left">Status</th>
+                        <th class="px-6 py-4 text-right w-40">Actions</th>
+                    </tr>
             </thead>
 
             <tbody class="divide-y divide-slate-100">
@@ -78,6 +79,21 @@
                                             </span>
                                         </p>
                                     @endif
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <!-- Image -->
+                        <td class="px-6 py-5">
+                            @if($category->image)
+                                <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->title }}" class="h-10 w-10 rounded-md object-cover">
+                            @else
+                                <div class="h-10 w-10 rounded-md bg-slate-50 flex items-center justify-center text-slate-300">
+                                    <i class="ri-image-line"></i>
+                                </div>
+                            @endif
+                        </td>
                                 </div>
 
                             </div>
@@ -132,7 +148,7 @@
 
                 @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-12 text-center text-slate-400">
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
                             No categories found.
                         </td>
                     </tr>
@@ -149,14 +165,20 @@
 
         @forelse($categories as $category)
 
-            <div wire:key="mobile-category-{{ $category->id }}"
-                 class="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
+              <div wire:key="mobile-category-{{ $category->id }}"
+                  class="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
 
                 <div class="flex items-start gap-3">
 
-                    <div class="h-9 w-9 flex items-center justify-center rounded-md
-                        {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
-                        <i class="ri-folder-3-line text-base"></i>
+
+                    <div class="h-9 w-9 flex items-center justify-center rounded-md overflow-hidden">
+                        @if($category->image)
+                            <img src="{{ asset('storage/' . $category->image) }}" class="object-cover w-full h-full" alt="{{ $category->title }}">
+                        @else
+                            <div class="h-9 w-9 flex items-center justify-center rounded-md {{ $category->parent ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600' }}">
+                                <i class="ri-folder-3-line text-base"></i>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="flex-1">

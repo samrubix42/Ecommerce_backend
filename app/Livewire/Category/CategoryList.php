@@ -8,10 +8,12 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryList extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     #[Url]
     public string $search = '';
@@ -25,7 +27,13 @@ class CategoryList extends Component
     public bool $isSubcategory = false; // 👈 NEW
     public ?int $parentId = null;
 
+    public string $meta_title = '';
+    public string $meta_keywords = '';
+    public string $meta_description = '';
+
     public ?int $deleteId = null;
+    public $image = null;
+    public $existingImage = null;
 
     protected function rules()
     {
@@ -34,6 +42,10 @@ class CategoryList extends Component
             'slug' => 'required|unique:product_categories,slug,' . $this->categoryId,
             'description' => 'nullable|string',
             'parentId' => 'nullable|exists:product_categories,id',
+            'image' => 'nullable|image|max:2048',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_keywords' => 'nullable|string',
+            'meta_description' => 'nullable|string',
         ];
     }
 
@@ -57,6 +69,14 @@ class CategoryList extends Component
         $this->description  = $category->description;
         $this->status       = (bool) ($category->status ?? true);
         $this->parentId     = $category->parent_id;
+
+        // existing image path (storage disk)
+        $this->existingImage = $category->image;
+
+        // populate meta fields
+        $this->meta_title = $category->meta_title ?? '';
+        $this->meta_keywords = $category->meta_keywords ?? '';
+        $this->meta_description = $category->meta_description ?? '';
 
         // 👇 Automatically check if it has parent
         $this->isSubcategory = $category->parent_id ? true : false;
@@ -95,14 +115,32 @@ class CategoryList extends Component
     {
         $this->validate();
 
+        // determine existing category (if updating)
+        $existing = $this->categoryId ? ProductCategory::find($this->categoryId) : null;
+
+        // handle image upload
+        $imagePath = $existing->image ?? null;
+        if ($this->image) {
+            // delete old image if exists
+            if ($existing && $existing->image) {
+                Storage::disk('public')->delete($existing->image);
+            }
+
+            $imagePath = $this->image->store('categories', 'public');
+        }
+
         ProductCategory::updateOrCreate(
             ['id' => $this->categoryId],
             [
-                'parent_id'   => $this->isSubcategory ? $this->parentId : null,
-                'title'       => $this->name,
-                'slug'        => $this->slug,
-                'description' => $this->description,
-                'status'      => $this->status,
+                'parent_id'      => $this->isSubcategory ? $this->parentId : null,
+                'title'          => $this->name,
+                'slug'           => $this->slug,
+                'description'    => $this->description,
+                'status'         => $this->status,
+                'image'          => $imagePath,
+                'meta_title'     => $this->meta_title,
+                'meta_keywords'  => $this->meta_keywords,
+                'meta_description' => $this->meta_description,
             ]
         );
 
@@ -160,7 +198,12 @@ class CategoryList extends Component
             'description',
             'status',
             'parentId',
-            'isSubcategory'
+            'isSubcategory',
+            'image',
+            'existingImage',
+            'meta_title',
+            'meta_keywords',
+            'meta_description'
         ]);
 
         $this->status = true;

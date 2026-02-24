@@ -14,6 +14,11 @@ class ProductCategory extends Model
         'slug',
         'description',
         'status',
+        'image',
+        'meta_title',
+        'meta_keywords',
+        'meta_description',
+        
     ];
 
     /**
