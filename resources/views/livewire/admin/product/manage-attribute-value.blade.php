@@ -91,7 +91,7 @@
             </tbody>
         </table>
 
-        <div class="p-4 ">
+        <div class="p-4 flex items-center justify-end">
             {{ $attributeList->links() }}
         </div>
     </div>

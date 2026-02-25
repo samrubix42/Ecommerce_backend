@@ -266,7 +266,7 @@ class ManageAttributeValue extends Component
     {
         $attributeList = Attribute::where('name', 'like', "%{$this->search}%")
             ->latest()
-            ->paginate(10);
+            ->paginate(2);
 
         return view('livewire.admin.product.manage-attribute-value', compact('attributeList'));
     }
