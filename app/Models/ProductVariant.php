@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
 {
-
-   use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'product_id',
@@ -50,8 +49,8 @@ class ProductVariant extends Model
         return $this->hasMany(VariantAttribute::class, 'product_variant_id');
     }
 
-   public function images()
-{
-    return $this->hasMany(ProductImage::class);
-}
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
 }

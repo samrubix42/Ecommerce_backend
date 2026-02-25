@@ -10,27 +10,19 @@ class Product extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'product_id',
-        'sku',
-        'barcode',
-        'price',
-        'sale_price',
-        'cost_price',
-        'stock',
-        'low_stock_alert',
-        'weight',
-        'dimensions',
-        'is_default',
+        'category_id',
+        'name',
+        'slug',
+        'short_description',
+        'description',
+        'has_variants',
+        'is_featured',
         'status',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'sale_price' => 'decimal:2',
-        'cost_price' => 'decimal:2',
-        'dimensions' => 'array',
-        'is_default' => 'boolean',
-        'status' => 'boolean',
+        'has_variants' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     /*
@@ -39,18 +31,28 @@ class Product extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function product()
+    public function category()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 
-    public function attributes()
+    public function variants()
     {
-        return $this->hasMany(VariantAttribute::class, 'product_variant_id');
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function defaultVariant()
+    {
+        return $this->hasOne(ProductVariant::class)->where('is_default', true);
     }
 
     public function images()
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 }

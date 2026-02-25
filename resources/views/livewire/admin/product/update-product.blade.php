@@ -3,9 +3,16 @@
     {{-- ═══════════════════════════════════════════════════════
          PAGE HEADER
     ═══════════════════════════════════════════════════════ --}}
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Add New Product</h1>
-        <p class="text-sm text-neutral-500 mt-1">Fill in the details to create a new product listing</p>
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Update Product</h1>
+            <p class="text-sm text-neutral-500 mt-1">Editing: <span class="text-indigo-600 font-semibold">{{ $product->name }}</span></p>
+        </div>
+        <a href="{{ route('admin.products.index') }}" wire:navigate
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-all">
+            <i class="ri-arrow-left-s-line"></i>
+            Back to List
+        </a>
     </div>
 
     {{-- ═══════════════════════════════════════════════════════
@@ -137,14 +144,14 @@
             @else
                 <button wire:click="save"
                     wire:loading.attr="disabled"
-                    class="group inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600
-                           text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 text-sm font-medium
-                           shadow-lg shadow-emerald-200/50 hover:shadow-emerald-300/50 disabled:opacity-60">
+                    class="group inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600
+                           text-white hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 text-sm font-medium
+                           shadow-lg shadow-indigo-200/50 hover:shadow-indigo-300/50 disabled:opacity-60">
                     <span wire:loading.remove wire:target="save">
-                        <i class="ri-rocket-line"></i> Publish Product
+                        <i class="ri-save-line"></i> Update Product
                     </span>
                     <span wire:loading wire:target="save">
-                        <i class="ri-loader-4-line animate-spin"></i> Publishing…
+                        <i class="ri-loader-4-line animate-spin"></i> Updating…
                     </span>
                 </button>
             @endif

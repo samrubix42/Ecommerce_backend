@@ -48,6 +48,11 @@ class AdminSidebar
                             'url' => route('admin.attributes'),
                         ],
                         (object) [
+                            'title' => 'Product List',
+                            'icon' => 'ri-list-check',
+                            'url' => route('admin.products.index'),
+                        ],
+                        (object) [
                             'title' => 'Add Product',
                             'icon' => 'ri-add-line',
                             'url' => route('admin.add-product'),

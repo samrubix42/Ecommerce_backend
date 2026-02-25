@@ -51,6 +51,13 @@
         });
     </script>
     @livewireScripts
+    <script>
+        document.addEventListener('livewire:navigated', () => {
+            @if(session()->has('success'))
+                window.toast('{{ session('success') }}', { type: 'success', position: 'top-right' });
+            @endif
+        });
+    </script>
 </body>
 
 </html>

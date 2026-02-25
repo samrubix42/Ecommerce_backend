@@ -2,125 +2,353 @@
 
 namespace App\Livewire\Admin\Product;
 
+use App\Models\Attribute;
+use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductImage;
+use App\Models\VariantAttribute;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\ProductImage;
-
 
 class AddProduct extends Component
 {
-      use WithFileUploads;
+    use WithFileUploads;
 
     public int $step = 1;
+    public int $totalSteps = 5;
 
-    // Basic
+    // ── Step 1: Basic Information ──
     public string $name = '';
     public string $slug = '';
-    public ?int $category_id = null;
+    public ?string $category_id = null;
+    public string $short_description = '';
     public string $description = '';
     public bool $has_variants = false;
+    public bool $is_featured = false;
 
-    // Simple Product
-    public $simple_price;
-    public $simple_stock;
-    public array $product_images = [];
+    // ── Step 2: Pricing & Inventory (Non-Variant) ──
+    public string $sku = '';
+    public string $barcode = '';
+    public $price = '';
+    public $sale_price = '';
+    public $cost_price = '';
+    public $stock = '';
+    public $low_stock_alert = '5';
+    public $weight = '';
 
-    // Variant Mode
+    // ── Step 3: Variants ──
+    public array $selectedAttributes = [];
     public array $variants = [];
+
+    // ── Step 4: Media ──
+    public $productImages = [];
+
+    // ── Step 5: Status ──
+    public string $status = 'draft';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Computed Properties
+    |--------------------------------------------------------------------------
+    */
+
+    #[Computed]
+    public function categories()
+    {
+        return ProductCategory::where('status', true)->orderBy('title')->get();
+    }
+
+    #[Computed]
+    public function productAttributes()
+    {
+        return Attribute::with('values')->where('status', true)->get();
+    }
+
+    #[Computed]
+    public function progress()
+    {
+        return round(($this->step / $this->totalSteps) * 100);
+    }
+
+    #[Computed]
+    public function stepInfo()
+    {
+        return [
+            1 => ['title' => 'Basic Info', 'icon' => 'ri-information-line'],
+            2 => ['title' => 'Pricing', 'icon' => 'ri-price-tag-3-line'],
+            3 => ['title' => 'Variants', 'icon' => 'ri-stack-line'],
+            4 => ['title' => 'Media', 'icon' => 'ri-image-line'],
+            5 => ['title' => 'Publish', 'icon' => 'ri-rocket-line'],
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lifecycle Hooks
+    |--------------------------------------------------------------------------
+    */
 
     public function updatedName()
     {
         $this->slug = Str::slug($this->name);
     }
 
-    public function addVariant()
+    public function updatedHasVariants()
     {
-        $this->variants[] = [
-            'sku' => '',
-            'price' => '',
-            'stock' => '',
-            'images' => [],
-        ];
+        if (!$this->has_variants) {
+            $this->selectedAttributes = [];
+            $this->variants = [];
+        }
     }
 
-    public function removeVariant($index)
+    /*
+    |--------------------------------------------------------------------------
+    | Step Navigation
+    |--------------------------------------------------------------------------
+    */
+
+    protected function stepRules(): array
     {
-        unset($this->variants[$index]);
-        $this->variants = array_values($this->variants);
+        return match ($this->step) {
+            1 => [
+                'name' => 'required|string|max:255',
+                'slug' => 'required|string|max:255|unique:products,slug',
+            ],
+            2 => [
+                'price' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'sale_price' => 'nullable|numeric|min:0',
+                'cost_price' => 'nullable|numeric|min:0',
+            ],
+            3 => [
+                'variants' => 'required|array|min:1',
+                'variants.*.price' => 'required|numeric|min:0',
+                'variants.*.stock' => 'required|integer|min:0',
+            ],
+            default => [],
+        };
     }
+
+    public function next()
+    {
+        $rules = $this->stepRules();
+        if (!empty($rules)) {
+            $this->validate($rules);
+        }
+
+        // Skip pricing step for variant products
+        if ($this->step === 1 && $this->has_variants) {
+            $this->step = 3;
+            return;
+        }
+
+        // Skip variants step for non-variant products
+        if ($this->step === 2) {
+            $this->step = 4;
+            return;
+        }
+
+        if ($this->step < $this->totalSteps) {
+            $this->step++;
+        }
+    }
+
+    public function back()
+    {
+        if ($this->step === 4 && !$this->has_variants) {
+            $this->step = 2;
+            return;
+        }
+
+        if ($this->step === 4 && $this->has_variants) {
+            $this->step = 3;
+            return;
+        }
+
+        if ($this->step === 3) {
+            $this->step = 1;
+            return;
+        }
+
+        if ($this->step > 1) {
+            $this->step--;
+        }
+    }
+
+    public function goToStep(int $target)
+    {
+        if ($target >= $this->step || $target < 1) return;
+        if ($target === 2 && $this->has_variants) return;
+        if ($target === 3 && !$this->has_variants) return;
+        $this->step = $target;
+    }
+
+    public function isStepSkipped(int $stepNum): bool
+    {
+        return ($stepNum === 2 && $this->has_variants) || ($stepNum === 3 && !$this->has_variants);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Variant Management
+    |--------------------------------------------------------------------------
+    */
+
+    public function toggleAttributeValue(int $attributeId, int $valueId)
+    {
+        $key = (string) $attributeId;
+
+        if (!isset($this->selectedAttributes[$key])) {
+            $this->selectedAttributes[$key] = [];
+        }
+
+        $index = array_search($valueId, $this->selectedAttributes[$key]);
+
+        if ($index !== false) {
+            array_splice($this->selectedAttributes[$key], $index, 1);
+        } else {
+            $this->selectedAttributes[$key][] = $valueId;
+        }
+
+        $this->selectedAttributes = array_filter($this->selectedAttributes, fn($v) => !empty($v));
+        $this->generateVariants();
+    }
+
+    public function isValueSelected(int $attributeId, int $valueId): bool
+    {
+        return in_array($valueId, $this->selectedAttributes[(string) $attributeId] ?? []);
+    }
+
+    public function generateVariants()
+    {
+        $this->variants = [];
+        $active = array_filter($this->selectedAttributes, fn($v) => !empty($v));
+        if (empty($active)) return;
+
+        $combinations = [[]];
+        foreach ($active as $attrId => $valueIds) {
+            $tmp = [];
+            foreach ($combinations as $combo) {
+                foreach ($valueIds as $valId) {
+                    $tmp[] = array_merge($combo, [$attrId => $valId]);
+                }
+            }
+            $combinations = $tmp;
+        }
+
+        $attrs = $this->productAttributes;
+
+        foreach ($combinations as $i => $combo) {
+            $parts = [];
+            foreach ($combo as $aId => $vId) {
+                $attr = $attrs->firstWhere('id', (int) $aId);
+                $val = $attr?->values->firstWhere('id', (int) $vId);
+                if ($val) $parts[] = $val->value;
+            }
+
+            $this->variants[] = [
+                'name' => implode(' / ', $parts),
+                'sku' => strtoupper(Str::slug($this->name ?: 'PROD')) . '-V' . ($i + 1),
+                'price' => '',
+                'sale_price' => '',
+                'cost_price' => '',
+                'stock' => '0',
+                'attributes' => $combo,
+            ];
+        }
+    }
+
+    public function removeVariant(int $index)
+    {
+        array_splice($this->variants, $index, 1);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Management
+    |--------------------------------------------------------------------------
+    */
+
+    public function removeImage(int $index)
+    {
+        $arr = is_array($this->productImages) ? $this->productImages : $this->productImages->toArray();
+        unset($arr[$index]);
+        $this->productImages = array_values($arr);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Save Product
+    |--------------------------------------------------------------------------
+    */
 
     public function save()
     {
-        $this->validate([
-            'name' => 'required|string|min:3',
-            'slug' => 'required|string',
-            'product_images.*' => 'nullable|image|max:5120',
-        ]);
-
         $product = Product::create([
-            'category_id' => $this->category_id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'category_id' => $this->category_id ?: null,
+            'short_description' => $this->short_description,
             'description' => $this->description,
             'has_variants' => $this->has_variants,
-            'status' => 'active'
+            'is_featured' => $this->is_featured,
+            'status' => $this->status,
         ]);
 
-        // store product images
-        foreach ($this->product_images ?? [] as $idx => $file) {
-            if (!$file) continue;
-            $path = $file->store('products', 'public');
-            ProductImage::create([
-                'imageable_id' => $product->id,
-                'imageable_type' => Product::class,
-                'image_path' => $path,
-                'is_primary' => $idx === 0,
-                'sort_order' => $idx,
-            ]);
-        }
         if (!$this->has_variants) {
-
             $product->variants()->create([
-                'sku' => 'DEFAULT-' . strtoupper(Str::random(5)),
-                'price' => $this->simple_price,
-                'stock' => $this->simple_stock,
-                'is_default' => true
+                'sku' => $this->sku ?: 'SKU-' . strtoupper(Str::random(8)),
+                'barcode' => $this->barcode ?: null,
+                'price' => $this->price,
+                'sale_price' => $this->sale_price ?: null,
+                'cost_price' => $this->cost_price ?: null,
+                'stock' => $this->stock,
+                'low_stock_alert' => $this->low_stock_alert ?: 5,
+                'weight' => $this->weight ?: null,
+                'is_default' => true,
+                'status' => true,
             ]);
-
         } else {
-
-            foreach ($this->variants as $variant) {
-                $created = $product->variants()->create([
-                    'sku' => $variant['sku'] ?? ('VAR-' . strtoupper(Str::random(5))),
-                    'price' => $variant['price'] ?? 0,
-                    'stock' => $variant['stock'] ?? 0,
-                    'is_default' => false,
+            foreach ($this->variants as $i => $v) {
+                $variant = $product->variants()->create([
+                    'sku' => $v['sku'] ?: 'SKU-' . strtoupper(Str::random(8)),
+                    'price' => $v['price'],
+                    'sale_price' => $v['sale_price'] ?: null,
+                    'cost_price' => $v['cost_price'] ?: null,
+                    'stock' => $v['stock'] ?: 0,
+                    'is_default' => $i === 0,
+                    'status' => true,
                 ]);
 
-                // variant images
-                if (!empty($variant['images'])) {
-                    foreach ($variant['images'] as $vidx => $vfile) {
-                        if (!$vfile) continue;
-                        $vpath = $vfile->store('variants', 'public');
-                        ProductImage::create([
-                            'imageable_id' => $created->id,
-                            'imageable_type' => ProductVariant::class,
-                            'image_path' => $vpath,
-                            'is_primary' => $vidx === 0,
-                            'sort_order' => $vidx,
-                        ]);
-                    }
+                foreach ($v['attributes'] as $attrId => $valId) {
+                    VariantAttribute::create([
+                        'product_variant_id' => $variant->id,
+                        'attribute_id' => $attrId,
+                        'attribute_value_id' => $valId,
+                    ]);
                 }
             }
         }
 
-        session()->flash('success', 'Product Created Successfully!');
-        return redirect()->route('products.index');
+        if ($this->productImages) {
+            foreach ($this->productImages as $i => $image) {
+                $path = $image->store('products', 'public');
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_path' => $path,
+                    'is_primary' => $i === 0,
+                    'sort_order' => $i,
+                ]);
+            }
+        }
+
+        session()->flash('success', 'Product created successfully!');
+        return $this->redirect(route('admin.products.index'), navigate: true);
     }
+
     #[Layout('layouts.admin')]
     public function render()
     {

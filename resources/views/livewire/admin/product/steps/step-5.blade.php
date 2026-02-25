@@ -1,0 +1,163 @@
+{{-- ═══════════════════════════════════════════════════════
+     STEP 5 — REVIEW & PUBLISH
+═══════════════════════════════════════════════════════ --}}
+
+<div class="space-y-6">
+
+    {{-- Status Selector --}}
+    <div>
+        <h3 class="text-sm font-semibold text-neutral-700 flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
+                <i class="ri-toggle-line"></i>
+            </span>
+            Publish Status
+        </h3>
+
+        <div class="grid grid-cols-3 gap-3">
+            @foreach(['draft' => ['label' => 'Draft', 'icon' => 'ri-edit-line', 'desc' => 'Hidden from store', 'color' => 'amber'], 'active' => ['label' => 'Active', 'icon' => 'ri-check-double-line', 'desc' => 'Live on store', 'color' => 'emerald'], 'inactive' => ['label' => 'Inactive', 'icon' => 'ri-pause-circle-line', 'desc' => 'Temporarily hidden', 'color' => 'neutral']] as $value => $opt)
+                <label
+                    @class([
+                        'relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
+                        'border-indigo-400 bg-indigo-50/50 shadow-md shadow-indigo-100/50' => $status === $value,
+                        'border-neutral-200 bg-white hover:border-neutral-300' => $status !== $value,
+                    ])>
+                    <input type="radio" wire:model="status" value="{{ $value }}" class="sr-only">
+                    <div @class([
+                        'w-10 h-10 rounded-xl flex items-center justify-center transition-colors',
+                        "bg-{$opt['color']}-100 text-{$opt['color']}-600" => true,
+                    ])>
+                        <i class="{{ $opt['icon'] }} text-xl"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-neutral-700">{{ $opt['label'] }}</span>
+                    <span class="text-xs text-neutral-400">{{ $opt['desc'] }}</span>
+                    @if($status === $value)
+                        <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                            <i class="ri-check-line text-xs"></i>
+                        </div>
+                    @endif
+                </label>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Review Summary --}}
+    <div>
+        <h3 class="text-sm font-semibold text-neutral-700 flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">
+                <i class="ri-file-list-3-line"></i>
+            </span>
+            Product Summary
+        </h3>
+
+        <div class="bg-neutral-50/80 rounded-xl border border-neutral-100 divide-y divide-neutral-100">
+
+            {{-- Basic Info --}}
+            <div class="p-5">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h4 class="font-semibold text-neutral-800 text-base">{{ $name ?: '—' }}</h4>
+                        <p class="text-xs text-neutral-400 mt-0.5">/products/{{ $slug }}</p>
+                    </div>
+                    <div class="flex gap-1.5">
+                        @if($is_featured)
+                            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase">Featured</span>
+                        @endif
+                        @if($has_variants)
+                            <span class="px-2 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold uppercase">Variants</span>
+                        @else
+                            <span class="px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 text-[10px] font-bold uppercase">Simple</span>
+                        @endif
+                    </div>
+                </div>
+                @if($short_description)
+                    <p class="text-sm text-neutral-500 mt-2">{{ Str::limit($short_description, 120) }}</p>
+                @endif
+            </div>
+
+            {{-- Pricing / Variants --}}
+            <div class="p-5">
+                @if(!$has_variants)
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <span class="text-xs text-neutral-400 block mb-0.5">Price</span>
+                            <span class="text-sm font-semibold text-neutral-800">₹{{ number_format($price ?: 0, 2) }}</span>
+                        </div>
+                        @if($sale_price)
+                            <div>
+                                <span class="text-xs text-neutral-400 block mb-0.5">Sale Price</span>
+                                <span class="text-sm font-semibold text-emerald-600">₹{{ number_format($sale_price, 2) }}</span>
+                            </div>
+                        @endif
+                        <div>
+                            <span class="text-xs text-neutral-400 block mb-0.5">Stock</span>
+                            <span class="text-sm font-semibold text-neutral-800">{{ $stock ?: 0 }} units</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-neutral-400 block mb-0.5">SKU</span>
+                            <span class="text-sm font-mono text-neutral-600">{{ $sku ?: 'Auto' }}</span>
+                        </div>
+                    </div>
+                @else
+                    <div class="space-y-2">
+                        <span class="text-xs text-neutral-400">{{ count($variants) }} Variant(s)</span>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            @foreach($variants as $v)
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-neutral-200 text-xs font-medium text-neutral-700">
+                                    {{ $v['name'] }}
+                                    <span class="text-neutral-400">·</span>
+                                    <span class="text-indigo-600">₹{{ number_format($v['price'] ?: 0, 2) }}</span>
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Images --}}
+            <div class="p-5">
+                <span class="text-xs text-neutral-400 block mb-2">Images</span>
+                <div class="flex flex-wrap gap-2">
+                    {{-- Existing Images --}}
+                    @if(isset($existingImages))
+                        @foreach(collect($existingImages)->take(6) as $img)
+                            <div class="w-12 h-12 rounded-lg overflow-hidden border border-neutral-200">
+                                <img src="{{ asset('storage/' . $img['image_path']) }}" class="w-full h-full object-cover" alt="">
+                            </div>
+                        @endforeach
+                    @endif
+
+                    {{-- New Images --}}
+                    @if($productImages && count($productImages) > 0)
+                        @foreach(collect($productImages)->take(6) as $image)
+                            <div class="w-12 h-12 rounded-lg overflow-hidden border border-indigo-200 ring-2 ring-indigo-50">
+                                <img src="{{ $image->temporaryUrl() }}" class="w-full h-full object-cover" alt="">
+                            </div>
+                        @endforeach
+                    @endif
+
+                    @php
+                        $totalCount = ($productImages ? count($productImages) : 0) + (isset($existingImages) ? count($existingImages) : 0);
+                    @endphp
+                    @if($totalCount > 12)
+                        <div class="w-12 h-12 rounded-lg bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-semibold text-neutral-500">
+                            +{{ $totalCount - 12 }}
+                        </div>
+                    @endif
+
+                    @if($totalCount === 0)
+                        <span class="text-xs text-neutral-400 italic">No images</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Info Banner --}}
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-indigo-50/80 border border-indigo-100">
+        <i class="ri-information-line text-indigo-500 text-lg mt-0.5"></i>
+        <div>
+            <p class="text-sm font-medium text-indigo-800">Ready to save?</p>
+            <p class="text-xs text-indigo-600/70 mt-0.5">Review the details above, then click "{{ isset($existingImages) ? 'Update' : 'Publish' }} Product" to save.</p>
+        </div>
+    </div>
+</div>
