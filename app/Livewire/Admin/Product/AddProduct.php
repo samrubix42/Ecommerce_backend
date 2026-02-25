@@ -42,6 +42,7 @@ class AddProduct extends Component
     // ── Step 3: Variants ──
     public array $selectedAttributes = [];
     public array $variants = [];
+    public $variantImages = []; // Stores temporary uploads for variants
 
     // ── Step 4: Media ──
     public $productImages = [];
@@ -126,6 +127,7 @@ class AddProduct extends Component
             3 => [
                 'variants' => 'required|array|min:1',
                 'variants.*.price' => 'required|numeric|min:0',
+                'variants.*.cost_price' => 'nullable|numeric|min:0',
                 'variants.*.stock' => 'required|integer|min:0',
             ],
             default => [],
@@ -233,7 +235,7 @@ class AddProduct extends Component
             $tmp = [];
             foreach ($combinations as $combo) {
                 foreach ($valueIds as $valId) {
-                    $tmp[] = array_merge($combo, [$attrId => $valId]);
+                    $tmp[] = $combo + [$attrId => $valId];
                 }
             }
             $combinations = $tmp;
@@ -246,7 +248,7 @@ class AddProduct extends Component
             foreach ($combo as $aId => $vId) {
                 $attr = $attrs->firstWhere('id', (int) $aId);
                 $val = $attr?->values->firstWhere('id', (int) $vId);
-                if ($val) $parts[] = $val->value;
+                if ($val) $parts[] = ($attr ? $attr->name . ': ' : '') . $val->value;
             }
 
             $this->variants[] = [
@@ -256,6 +258,7 @@ class AddProduct extends Component
                 'sale_price' => '',
                 'cost_price' => '',
                 'stock' => '0',
+                'status' => true,
                 'attributes' => $combo,
             ];
         }
@@ -277,6 +280,14 @@ class AddProduct extends Component
         $arr = is_array($this->productImages) ? $this->productImages : $this->productImages->toArray();
         unset($arr[$index]);
         $this->productImages = array_values($arr);
+    }
+
+    public function removeVariantImage(int $variantIndex, int $imageIndex)
+    {
+        if (isset($this->variantImages[$variantIndex][$imageIndex])) {
+            unset($this->variantImages[$variantIndex][$imageIndex]);
+            $this->variantImages[$variantIndex] = array_values($this->variantImages[$variantIndex]);
+        }
     }
 
     /*
@@ -316,12 +327,25 @@ class AddProduct extends Component
                 $variant = $product->variants()->create([
                     'sku' => $v['sku'] ?: 'SKU-' . strtoupper(Str::random(8)),
                     'price' => $v['price'],
-                    'sale_price' => $v['sale_price'] ?: null,
                     'cost_price' => $v['cost_price'] ?: null,
                     'stock' => $v['stock'] ?: 0,
                     'is_default' => $i === 0,
-                    'status' => true,
+                    'status' => $v['status'] ?? true,
                 ]);
+
+                // Save Variant Images if uploaded
+                if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {
+                    foreach ($this->variantImages[$i] as $img) {
+                        $path = $img->store('products/variants', 'public');
+                        ProductImage::create([
+                            'product_id' => $product->id,
+                            'product_variant_id' => $variant->id,
+                            'image_path' => $path,
+                            'is_primary' => false,
+                            'sort_order' => 0,
+                        ]);
+                    }
+                }
 
                 foreach ($v['attributes'] as $attrId => $valId) {
                     VariantAttribute::create([

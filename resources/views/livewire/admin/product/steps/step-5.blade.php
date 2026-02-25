@@ -18,7 +18,7 @@
                 <label
                     @class([
                         'relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
-                        'border-indigo-400 bg-indigo-50/50 shadow-md shadow-indigo-100/50' => $status === $value,
+                        'border-blue-400 bg-blue-50/50 shadow-md shadow-blue-100/50' => $status === $value,
                         'border-neutral-200 bg-white hover:border-neutral-300' => $status !== $value,
                     ])>
                     <input type="radio" wire:model="status" value="{{ $value }}" class="sr-only">
@@ -31,7 +31,7 @@
                     <span class="text-sm font-semibold text-neutral-700">{{ $opt['label'] }}</span>
                     <span class="text-xs text-neutral-400">{{ $opt['desc'] }}</span>
                     @if($status === $value)
-                        <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                        <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center">
                             <i class="ri-check-line text-xs"></i>
                         </div>
                     @endif
@@ -43,7 +43,7 @@
     {{-- Review Summary --}}
     <div>
         <h3 class="text-sm font-semibold text-neutral-700 flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">
+            <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
                 <i class="ri-file-list-3-line"></i>
             </span>
             Product Summary
@@ -63,7 +63,7 @@
                             <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase">Featured</span>
                         @endif
                         @if($has_variants)
-                            <span class="px-2 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-bold uppercase">Variants</span>
+                            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold uppercase">Variants</span>
                         @else
                             <span class="px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 text-[10px] font-bold uppercase">Simple</span>
                         @endif
@@ -77,7 +77,7 @@
             {{-- Pricing / Variants --}}
             <div class="p-5">
                 @if(!$has_variants)
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                         <div>
                             <span class="text-xs text-neutral-400 block mb-0.5">Price</span>
                             <span class="text-sm font-semibold text-neutral-800">₹{{ number_format($price ?: 0, 2) }}</span>
@@ -89,6 +89,10 @@
                             </div>
                         @endif
                         <div>
+                            <span class="text-xs text-neutral-400 block mb-0.5">Cost</span>
+                            <span class="text-sm font-semibold text-neutral-500">₹{{ number_format($cost_price ?: 0, 2) }}</span>
+                        </div>
+                        <div>
                             <span class="text-xs text-neutral-400 block mb-0.5">Stock</span>
                             <span class="text-sm font-semibold text-neutral-800">{{ $stock ?: 0 }} units</span>
                         </div>
@@ -97,16 +101,50 @@
                             <span class="text-sm font-mono text-neutral-600">{{ $sku ?: 'Auto' }}</span>
                         </div>
                     </div>
+                    @if($price && $cost_price)
+                        <div class="mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-[10px] font-bold text-blue-700 uppercase">
+                            Margin: {{ round((($price - $cost_price) / $price) * 100, 1) }}%
+                        </div>
+                    @endif
                 @else
-                    <div class="space-y-2">
+                    <div class="space-y-4">
                         <span class="text-xs text-neutral-400">{{ count($variants) }} Variant(s)</span>
-                        <div class="flex flex-wrap gap-2 mt-1">
-                            @foreach($variants as $v)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-neutral-200 text-xs font-medium text-neutral-700">
-                                    {{ $v['name'] }}
-                                    <span class="text-neutral-400">·</span>
-                                    <span class="text-indigo-600">₹{{ number_format($v['price'] ?: 0, 2) }}</span>
-                                </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @foreach($variants as $idx => $v)
+                                <div class="flex flex-col gap-2 p-3 rounded-lg bg-white border border-neutral-200 shadow-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-semibold text-neutral-700">{{ $v['name'] }}</span>
+                                        <span @class([
+                                            'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+                                            'bg-emerald-50 text-emerald-600' => $v['status'] ?? true,
+                                            'bg-neutral-100 text-neutral-400' => !($v['status'] ?? true),
+                                        ])>
+                                            {{ ($v['status'] ?? true) ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </div>
+
+                                    {{-- Variant Images --}}
+                                    <div class="flex flex-wrap gap-1.5 my-1">
+                                        @if(isset($existingVariantImages[$v['id'] ?? null]))
+                                            @foreach($existingVariantImages[$v['id']] as $vImg)
+                                                <img src="{{ asset('storage/' . $vImg['image_path']) }}" class="w-8 h-8 rounded border border-neutral-100 object-cover shadow-sm">
+                                            @endforeach
+                                        @endif
+                                        @if(isset($variantImages[$idx]) && is_array($variantImages[$idx]))
+                                            @foreach($variantImages[$idx] as $uImg)
+                                                <img src="{{ $uImg->temporaryUrl() }}" class="w-8 h-8 rounded border border-blue-100 object-cover shadow-sm">
+                                            @endforeach
+                                        @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-3 pt-2 border-t border-neutral-50">
+                                        <span class="text-xs font-bold text-blue-600">₹{{ number_format($v['price'] ?: 0, 2) }}</span>
+                                        @if($v['cost_price'])
+                                            <span class="text-[10px] text-neutral-400">Cost: ₹{{ number_format($v['cost_price'], 2) }}</span>
+                                        @endif
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-neutral-50 text-neutral-500 ml-auto">{{ $v['stock'] }} units</span>
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -129,7 +167,7 @@
                     {{-- New Images --}}
                     @if($productImages && count($productImages) > 0)
                         @foreach(collect($productImages)->take(6) as $image)
-                            <div class="w-12 h-12 rounded-lg overflow-hidden border border-indigo-200 ring-2 ring-indigo-50">
+                            <div class="w-12 h-12 rounded-lg overflow-hidden border border-blue-200 ring-2 ring-blue-50">
                                 <img src="{{ $image->temporaryUrl() }}" class="w-full h-full object-cover" alt="">
                             </div>
                         @endforeach
@@ -153,11 +191,11 @@
     </div>
 
     {{-- Info Banner --}}
-    <div class="flex items-start gap-3 p-4 rounded-xl bg-indigo-50/80 border border-indigo-100">
-        <i class="ri-information-line text-indigo-500 text-lg mt-0.5"></i>
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-blue-50/80 border border-blue-100">
+        <i class="ri-information-line text-blue-500 text-lg mt-0.5"></i>
         <div>
-            <p class="text-sm font-medium text-indigo-800">Ready to save?</p>
-            <p class="text-xs text-indigo-600/70 mt-0.5">Review the details above, then click "{{ isset($existingImages) ? 'Update' : 'Publish' }} Product" to save.</p>
+            <p class="text-sm font-medium text-blue-800">Ready to save?</p>
+            <p class="text-xs text-blue-600/70 mt-0.5">Review the details above, then click "{{ isset($existingImages) ? 'Update' : 'Publish' }} Product" to save.</p>
         </div>
     </div>
 </div>

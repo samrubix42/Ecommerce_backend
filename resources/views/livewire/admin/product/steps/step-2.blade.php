@@ -7,7 +7,7 @@
     {{-- Pricing Section --}}
     <div>
         <h3 class="text-sm font-semibold text-neutral-700 flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">
+            <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
                 <i class="ri-money-dollar-circle-line"></i>
             </span>
             Pricing
@@ -25,7 +25,7 @@
                         placeholder="0.00"
                         class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 pl-8 pr-4 py-3 text-sm
                                transition-all duration-200
-                               focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                               focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
                 </div>
                 @error('price')
                     <p class="mt-1 text-xs text-red-500"><i class="ri-error-warning-line"></i> {{ $message }}</p>
@@ -73,7 +73,7 @@
     {{-- Inventory Section --}}
     <div>
         <h3 class="text-sm font-semibold text-neutral-700 flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center text-xs">
+            <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
                 <i class="ri-archive-line"></i>
             </span>
             Inventory
@@ -86,7 +86,7 @@
                 <input id="product-sku" type="text" wire:model="sku"
                     placeholder="Auto-generated"
                     class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm
-                           transition-all duration-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                           transition-all duration-200 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
             </div>
 
             {{-- Barcode --}}
@@ -95,7 +95,7 @@
                 <input id="product-barcode" type="text" wire:model="barcode"
                     placeholder="UPC / EAN"
                     class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm
-                           transition-all duration-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                           transition-all duration-200 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
             </div>
 
             {{-- Stock --}}
@@ -106,7 +106,7 @@
                 <input id="product-stock" type="number" wire:model="stock"
                     placeholder="0"
                     class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm
-                           transition-all duration-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                           transition-all duration-200 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
                 @error('stock')
                     <p class="mt-1 text-xs text-red-500"><i class="ri-error-warning-line"></i> {{ $message }}</p>
                 @enderror
@@ -118,7 +118,7 @@
                 <input id="product-low-stock" type="number" wire:model="low_stock_alert"
                     placeholder="5"
                     class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm
-                           transition-all duration-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                           transition-all duration-200 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
             </div>
         </div>
     </div>
@@ -138,7 +138,7 @@
                 <input id="product-weight" type="number" step="0.01" wire:model="weight"
                     placeholder="0.00"
                     class="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 px-4 py-3 text-sm
-                           transition-all duration-200 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 focus:outline-none">
+                           transition-all duration-200 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 focus:outline-none">
             </div>
         </div>
     </div>

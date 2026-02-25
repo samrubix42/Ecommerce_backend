@@ -9,21 +9,21 @@
          x-on:dragover.prevent="dragging = true"
          x-on:dragleave.prevent="dragging = false"
          x-on:drop.prevent="dragging = false"
-         :class="dragging ? 'border-indigo-400 bg-indigo-50/50 scale-[1.01]' : 'border-neutral-200 bg-neutral-50/30 hover:border-indigo-300 hover:bg-indigo-50/30'"
+         :class="dragging ? 'border-blue-400 bg-blue-50/50 scale-[1.01]' : 'border-neutral-200 bg-neutral-50/30 hover:border-blue-300 hover:bg-blue-50/30'"
          class="relative border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 cursor-pointer group">
 
         <input type="file" wire:model="productImages" multiple accept="image/*"
             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" id="media-upload">
 
         <div class="flex flex-col items-center">
-            <div :class="dragging ? 'bg-indigo-200 text-indigo-700 scale-110' : 'bg-neutral-100 text-neutral-400 group-hover:bg-indigo-100 group-hover:text-indigo-500'"
+            <div :class="dragging ? 'bg-blue-200 text-blue-700 scale-110' : 'bg-neutral-100 text-neutral-400 group-hover:bg-blue-100 group-hover:text-blue-500'"
                  class="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300">
                 <i class="ri-image-add-line text-3xl"></i>
             </div>
 
             <h4 class="text-sm font-semibold text-neutral-700 mb-1">
                 <span x-show="!dragging">Drop images here or click to browse</span>
-                <span x-show="dragging" class="text-indigo-600">Release to upload</span>
+                <span x-show="dragging" class="text-blue-600">Release to upload</span>
             </h4>
             <p class="text-xs text-neutral-400">PNG, JPG, WEBP up to 2MB each</p>
         </div>
@@ -31,8 +31,8 @@
         {{-- Loading Indicator --}}
         <div wire:loading wire:target="productImages" class="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center backdrop-blur-sm">
             <div class="flex flex-col items-center gap-2">
-                <i class="ri-loader-4-line animate-spin text-2xl text-indigo-600"></i>
-                <span class="text-sm font-medium text-indigo-600">Uploading...</span>
+                <i class="ri-loader-4-line animate-spin text-2xl text-blue-600"></i>
+                <span class="text-sm font-medium text-blue-600">Uploading...</span>
             </div>
         </div>
     </div>
@@ -62,7 +62,7 @@
 
                         {{-- Primary Badge --}}
                         @if($img['is_primary'])
-                            <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider shadow">
+                            <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider shadow">
                                 Primary
                             </span>
                         @endif
@@ -106,7 +106,7 @@
 
                         {{-- Primary Badge --}}
                         @if($index === 0)
-                            <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider shadow">
+                            <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider shadow">
                                 Primary
                             </span>
                         @endif

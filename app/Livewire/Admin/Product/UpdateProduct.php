@@ -45,6 +45,8 @@ class UpdateProduct extends Component
     // ── Step 3: Variants ──
     public array $selectedAttributes = [];
     public array $variants = [];
+    public $variantImages = []; // Stores temporary uploads for variants
+    public $existingVariantImages = []; // Stores paths of currently saved images
 
     // ── Step 4: Media ──
     public $productImages = []; // New uploads
@@ -104,9 +106,21 @@ class UpdateProduct extends Component
                     'sale_price' => $variant->sale_price,
                     'cost_price' => $variant->cost_price,
                     'stock' => $variant->stock,
+                    'status' => $variant->status,
                     'attributes' => $combo,
                     'exists' => true,
                 ];
+
+                // Load variant images
+                foreach ($variant->images as $vImg) {
+                    if (!isset($this->existingVariantImages[$variant->id])) {
+                        $this->existingVariantImages[$variant->id] = [];
+                    }
+                    $this->existingVariantImages[$variant->id][] = [
+                        'id' => $vImg->id,
+                        'image_path' => $vImg->image_path,
+                    ];
+                }
             }
         }
 
@@ -121,7 +135,7 @@ class UpdateProduct extends Component
         foreach ($combo as $aId => $vId) {
             $attr = $attrs->firstWhere('id', (int) $aId);
             $val = $attr?->values->firstWhere('id', (int) $vId);
-            if ($val) $parts[] = $val->value;
+            if ($val) $parts[] = ($attr ? $attr->name . ': ' : '') . $val->value;
         }
         return implode(' / ', $parts);
     }
@@ -203,6 +217,7 @@ class UpdateProduct extends Component
             3 => [
                 'variants' => 'required|array|min:1',
                 'variants.*.price' => 'required|numeric|min:0',
+                'variants.*.cost_price' => 'nullable|numeric|min:0',
                 'variants.*.stock' => 'required|integer|min:0',
             ],
             default => [],
@@ -310,7 +325,7 @@ class UpdateProduct extends Component
             $tmp = [];
             foreach ($combinations as $combo) {
                 foreach ($valueIds as $valId) {
-                    $tmp[] = array_merge($combo, [$attrId => $valId]);
+                    $tmp[] = $combo + [$attrId => $valId];
                 }
             }
             $combinations = $tmp;
@@ -336,6 +351,7 @@ class UpdateProduct extends Component
                     'sale_price' => '',
                     'cost_price' => '',
                     'stock' => '0',
+                    'status' => true,
                     'attributes' => $combo,
                     'exists' => false,
                 ];
@@ -358,9 +374,22 @@ class UpdateProduct extends Component
     {
         $image = ProductImage::find($imageId);
         if ($image) {
-            Storage::disk('public')->delete($image->image_path);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($image->image_path);
             $image->delete();
             $this->existingImages = array_filter($this->existingImages, fn($img) => $img['id'] != $imageId);
+            
+            // Also filter existing variant images
+            foreach ($this->existingVariantImages as $vId => $imgs) {
+                $this->existingVariantImages[$vId] = array_filter($imgs, fn($img) => $img['id'] != $imageId);
+            }
+        }
+    }
+
+    public function removeVariantImage(int $variantIndex, int $imageIndex)
+    {
+        if (isset($this->variantImages[$variantIndex][$imageIndex])) {
+            unset($this->variantImages[$variantIndex][$imageIndex]);
+            $this->variantImages[$variantIndex] = array_values($this->variantImages[$variantIndex]);
         }
     }
 
@@ -438,7 +467,22 @@ class UpdateProduct extends Component
                         'cost_price' => $v['cost_price'] ?: null,
                         'stock' => $v['stock'],
                         'is_default' => $i === 0,
+                        'status' => $v['status'] ?? true,
                     ]);
+
+                    // Handle variant images update
+                    if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {
+                        foreach ($this->variantImages[$i] as $img) {
+                            $path = $img->store('products/variants', 'public');
+                            ProductImage::create([
+                                'product_id' => $this->product->id,
+                                'product_variant_id' => $variant->id,
+                                'image_path' => $path,
+                                'is_primary' => false,
+                                'sort_order' => 0,
+                            ]);
+                        }
+                    }
                 } else {
                     $variant = $this->product->variants()->create([
                         'sku' => $v['sku'] ?: 'SKU-' . strtoupper(Str::random(8)),
@@ -447,8 +491,22 @@ class UpdateProduct extends Component
                         'cost_price' => $v['cost_price'] ?: null,
                         'stock' => $v['stock'] ?: 0,
                         'is_default' => $i === 0 && $this->product->variants()->where('is_default', true)->count() == 0,
-                        'status' => true,
+                        'status' => $v['status'] ?? true,
                     ]);
+
+                    // Save Variant Images if uploaded
+                    if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {
+                        foreach ($this->variantImages[$i] as $img) {
+                            $path = $img->store('products/variants', 'public');
+                            ProductImage::create([
+                                'product_id' => $this->product->id,
+                                'product_variant_id' => $variant->id,
+                                'image_path' => $path,
+                                'is_primary' => false,
+                                'sort_order' => 0,
+                            ]);
+                        }
+                    }
 
                     foreach ($v['attributes'] as $attrId => $valId) {
                         VariantAttribute::create([

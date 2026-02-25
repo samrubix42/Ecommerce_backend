@@ -20,7 +20,7 @@
             @foreach($steps as $num => $info)
                 @php
                     $skipped   = $this->isStepSkipped($num);
-                    $completed = $num < $step && !$skipped;
+                    $completed = $num < $step;
                     $current   = $num === $step;
                 @endphp
 
@@ -30,14 +30,14 @@
                         wire:click="goToStep({{ $num }})"
                         @class([
                             'w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all duration-300 border-2',
-                            'bg-gradient-to-br from-indigo-500 to-violet-600 text-white border-indigo-400 shadow-lg shadow-indigo-200/50 scale-110' => $current,
-                            'bg-emerald-500 text-white border-emerald-400 shadow-sm' => $completed,
+                            'bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-400 shadow-lg shadow-blue-200/50 scale-110' => $current,
+                            'bg-blue-600 text-white border-blue-500 shadow-sm' => $completed && !$skipped,
                             'bg-neutral-100 text-neutral-300 border-neutral-200 opacity-50 cursor-not-allowed' => $skipped,
                             'bg-white text-neutral-400 border-neutral-200 hover:border-neutral-300' => !$current && !$completed && !$skipped,
                         ])
                         @if($skipped) disabled @endif
                     >
-                        @if($completed)
+                        @if($completed && !$skipped)
                             <i class="ri-check-line"></i>
                         @else
                             <i class="{{ $info['icon'] }}"></i>
@@ -46,8 +46,8 @@
 
                     <span @class([
                         'text-xs font-medium mt-2 transition-colors duration-300',
-                        'text-indigo-600 font-semibold' => $current,
-                        'text-emerald-600' => $completed,
+                        'text-blue-600 font-semibold' => $current,
+                        'text-blue-500' => $completed && !$skipped,
                         'text-neutral-300 line-through' => $skipped,
                         'text-neutral-400' => !$current && !$completed && !$skipped,
                     ])>
@@ -60,8 +60,7 @@
                     <div class="flex-1 mx-3 mt-[-20px]">
                         <div @class([
                             'h-0.5 rounded-full transition-all duration-500',
-                            'bg-emerald-400' => $completed && !$this->isStepSkipped($num + 1),
-                            'bg-gradient-to-r from-emerald-400 to-indigo-400' => $completed && $current,
+                            'bg-blue-600' => $completed,
                             'bg-neutral-200' => !$completed,
                         ])></div>
                     </div>
@@ -78,7 +77,7 @@
         {{-- Step Title --}}
         <div class="mb-8 pb-5 border-b border-neutral-100">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-sm">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-sm">
                     <i class="{{ $steps[$step]['icon'] ?? 'ri-file-line' }}"></i>
                 </div>
                 <div>
@@ -128,9 +127,9 @@
         <div>
             @if($step < $totalSteps)
                 <button wire:click="next"
-                    class="group inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600
-                           text-white hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 text-sm font-medium
-                           shadow-lg shadow-indigo-200/50 hover:shadow-indigo-300/50">
+                    class="group inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700
+                           text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-sm font-medium
+                           shadow-lg shadow-blue-200/50 hover:shadow-blue-300/50">
                     Continue
                     <i class="ri-arrow-right-line transition-transform group-hover:translate-x-0.5"></i>
                 </button>
