@@ -277,9 +277,9 @@ class AddProduct extends Component
 
     public function removeImage(int $index)
     {
-        $arr = is_array($this->productImages) ? $this->productImages : $this->productImages->toArray();
-        unset($arr[$index]);
-        $this->productImages = array_values($arr);
+        if (isset($this->productImages[$index])) {
+            array_splice($this->productImages, $index, 1);
+        }
     }
 
     public function removeVariantImage(int $variantIndex, int $imageIndex)

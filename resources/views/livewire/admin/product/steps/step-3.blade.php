@@ -2,7 +2,21 @@
      STEP 3 — VARIANT CONFIGURATION
 ═══════════════════════════════════════════════════════ --}}
 
-<div class="space-y-8">
+<div class="space-y-8"
+     x-data="{
+        showDeleteModal: false,
+        itemToDelete: null,
+        typeToDelete: null,
+        variantIndex: null,
+        confirmDelete() {
+            if(this.typeToDelete === 'existing') {
+                $wire.removeExistingImage(this.itemToDelete);
+            } else if(this.typeToDelete === 'new') {
+                $wire.removeVariantImage(this.variantIndex, this.itemToDelete);
+            }
+            this.showDeleteModal = false;
+        }
+    }">
 
     {{-- Attribute Selector --}}
     <div>
@@ -138,7 +152,8 @@
                                                 @foreach($existingVariantImages[$variant['id']] as $vImg)
                                                     <div class="relative w-12 h-12 rounded-lg border border-neutral-200 overflow-hidden bg-neutral-50 group">
                                                         <img src="{{ asset('storage/' . $vImg['image_path']) }}" class="w-full h-full object-cover">
-                                                        <button type="button" wire:click="removeExistingImage({{ $vImg['id'] }})"
+                                                        <button type="button" 
+                                                            @click="showDeleteModal = true; itemToDelete = {{ $vImg['id'] }}; typeToDelete = 'existing'; variantIndex = {{ $index }}"
                                                             class="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                             <i class="ri-delete-bin-line"></i>
                                                         </button>
@@ -151,7 +166,8 @@
                                                 @foreach($variantImages[$index] as $uKey => $uImg)
                                                     <div class="relative w-12 h-12 rounded-lg border border-blue-200 overflow-hidden bg-blue-50 group">
                                                         <img src="{{ $uImg->temporaryUrl() }}" class="w-full h-full object-cover">
-                                                        <button type="button" wire:click="removeVariantImage({{ $index }}, {{ $uKey }})"
+                                                        <button type="button" 
+                                                            @click="showDeleteModal = true; itemToDelete = {{ $uKey }}; typeToDelete = 'new'; variantIndex = {{ $index }}"
                                                             class="absolute inset-0 bg-blue-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                             <i class="ri-delete-bin-line"></i>
                                                         </button>
@@ -207,4 +223,41 @@
             <p class="text-xs text-neutral-400 mt-1">Select attribute values above to auto-generate variant combinations</p>
         </div>
     @endif
+
+    {{-- Variant Image Delete Confirmation Modal --}}
+    <div x-show="showDeleteModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div @click.away="showDeleteModal = false" 
+             class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            
+            <div class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-4">
+                <i class="ri-delete-bin-line text-3xl"></i>
+            </div>
+            
+            <h3 class="text-lg font-bold text-neutral-800 text-center mb-2">Delete Variant Image?</h3>
+            <p class="text-sm text-neutral-500 text-center mb-6">Are you sure you want to remove this image from the variant gallery? This action can be permanent for existing images.</p>
+            
+            <div class="flex gap-3">
+                <button type="button" @click="showDeleteModal = false"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" @click="confirmDelete()"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 shadow-lg shadow-red-200 transition-all">
+                    Yes, Delete
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

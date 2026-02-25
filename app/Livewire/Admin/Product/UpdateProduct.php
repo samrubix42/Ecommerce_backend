@@ -374,13 +374,34 @@ class UpdateProduct extends Component
     {
         $image = ProductImage::find($imageId);
         if ($image) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($image->image_path);
+            Storage::disk('public')->delete($image->image_path);
             $image->delete();
-            $this->existingImages = array_filter($this->existingImages, fn($img) => $img['id'] != $imageId);
             
-            // Also filter existing variant images
+            // Re-index parent product images
+            $this->existingImages = array_values(array_filter($this->existingImages, fn($img) => (int)$img['id'] !== $imageId));
+            
+            // Re-index variant-specific images
+            $newVariantImages = [];
             foreach ($this->existingVariantImages as $vId => $imgs) {
-                $this->existingVariantImages[$vId] = array_filter($imgs, fn($img) => $img['id'] != $imageId);
+                $newVariantImages[$vId] = array_values(array_filter($imgs, fn($img) => (int)$img['id'] !== $imageId));
+            }
+            $this->existingVariantImages = $newVariantImages;
+        }
+    }
+
+    public function setPrimaryImage(int $imageId)
+    {
+        // 1. Reset all images for this product to NOT primary
+        ProductImage::where('product_id', $this->product->id)->update(['is_primary' => false]);
+        
+        // 2. Set the selected one as primary
+        $image = ProductImage::find($imageId);
+        if ($image) {
+            $image->update(['is_primary' => true]);
+            
+            // 3. Sync local state
+            foreach ($this->existingImages as &$img) {
+                $img['is_primary'] = ($img['id'] === $imageId);
             }
         }
     }
@@ -388,16 +409,18 @@ class UpdateProduct extends Component
     public function removeVariantImage(int $variantIndex, int $imageIndex)
     {
         if (isset($this->variantImages[$variantIndex][$imageIndex])) {
-            unset($this->variantImages[$variantIndex][$imageIndex]);
-            $this->variantImages[$variantIndex] = array_values($this->variantImages[$variantIndex]);
+            $currentImages = $this->variantImages[$variantIndex];
+            array_splice($currentImages, $imageIndex, 1);
+            $this->variantImages[$variantIndex] = $currentImages;
         }
     }
 
     public function removeImage(int $index)
     {
-        $arr = is_array($this->productImages) ? $this->productImages : $this->productImages->toArray();
-        unset($arr[$index]);
-        $this->productImages = array_values($arr);
+        if (isset($this->productImages[$index])) {
+            array_splice($this->productImages, $index, 1);
+            $this->productImages = array_values($this->productImages);
+        }
     }
 
     /*
