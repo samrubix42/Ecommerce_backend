@@ -59,6 +59,13 @@ class AdminSidebar
                         ],
                     ],
                 ],
+                (object) [
+                    'title' => 'Coupons',
+                    'icon' => 'ri-coupon-line',
+                    'url' => route('admin.coupons'),
+                    'hasSubmenu' => false,
+                    'submenu' => [],
+                ],
                 
           
         ]);

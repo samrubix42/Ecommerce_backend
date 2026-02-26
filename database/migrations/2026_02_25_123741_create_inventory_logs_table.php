@@ -13,25 +13,31 @@ return new class extends Migration
     {
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_variant_id')
+
+            $table->foreignId('inventory_id')
                 ->constrained()
                 ->cascadeOnDelete();
+
             $table->enum('type', [
-                'purchase',    
-                'sale',         
-                'return',       
-                'adjustment'    
+                'stock_in',
+                'stock_out',
+                'sale',
+                'return',
+                'adjustment'
             ]);
 
             $table->integer('quantity');
-            $table->string('reference')->nullable();
+
+            $table->integer('before_quantity');
+            $table->integer('after_quantity');
+
+            $table->string('reference_type')->nullable();
+            $table->unsignedBigInteger('reference_id')->nullable();
+
             $table->text('note')->nullable();
+
             $table->timestamps();
-            $table->index('product_variant_id');
-            $table->index(['product_variant_id', 'type']);
-            $table->index('created_at');
         });
-     
     }
 
     /**
