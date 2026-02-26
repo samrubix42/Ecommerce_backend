@@ -18,7 +18,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->integer('quantity')->default(0); // sellable stock
+            $table->integer('quantity')->default(0); 
 
             $table->integer('reserved_quantity')->default(0);
 

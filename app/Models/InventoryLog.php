@@ -6,16 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryLog extends Model
 {
-      protected $fillable = [
-        'product_variant_id',
+     protected $fillable = [
+        'inventory_id',
         'type',
         'quantity',
-        'reference',
-        'note'
+        'before_quantity',
+        'after_quantity',
+        'reference_type',
+        'reference_id',
+        'note',
     ];
 
-    public function variant()
+    protected $casts = [
+        'quantity' => 'integer',
+        'before_quantity' => 'integer',
+        'after_quantity' => 'integer',
+    ];
+
+    public function inventory()
     {
-        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+        return $this->belongsTo(Inventory::class);
     }
 }
