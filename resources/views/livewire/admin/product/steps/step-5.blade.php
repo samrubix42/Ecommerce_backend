@@ -16,12 +16,14 @@
         <div class="grid grid-cols-3 gap-3">
             @foreach(['draft' => ['label' => 'Draft', 'icon' => 'ri-edit-line', 'desc' => 'Hidden from store', 'color' => 'amber'], 'active' => ['label' => 'Active', 'icon' => 'ri-check-double-line', 'desc' => 'Live on store', 'color' => 'emerald'], 'inactive' => ['label' => 'Inactive', 'icon' => 'ri-pause-circle-line', 'desc' => 'Temporarily hidden', 'color' => 'neutral']] as $value => $opt)
                 <label
+                    wire:key="status-{{ $value }}"
+                    for="status-{{ $value }}"
                     @class([
                         'relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
                         'border-blue-400 bg-blue-50/50 shadow-md shadow-blue-100/50' => $status === $value,
                         'border-neutral-200 bg-white hover:border-neutral-300' => $status !== $value,
                     ])>
-                    <input type="radio" wire:model="status" value="{{ $value }}" class="sr-only">
+                    <input type="radio" wire:model.live="status" id="status-{{ $value }}" value="{{ $value }}" class="sr-only">
                     <div @class([
                         'w-10 h-10 rounded-xl flex items-center justify-center transition-colors',
                         "bg-{$opt['color']}-100 text-{$opt['color']}-600" => true,
@@ -31,7 +33,7 @@
                     <span class="text-sm font-semibold text-neutral-700">{{ $opt['label'] }}</span>
                     <span class="text-xs text-neutral-400">{{ $opt['desc'] }}</span>
                     @if($status === $value)
-                        <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                        <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center scale-in">
                             <i class="ri-check-line text-xs"></i>
                         </div>
                     @endif
@@ -56,7 +58,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <h4 class="font-semibold text-neutral-800 text-base">{{ $name ?: '—' }}</h4>
-                        <p class="text-xs text-neutral-400 mt-0.5">/products/{{ $slug }}</p>
+                        <p class="text-xs text-neutral-400 mt-0.5">/products/{{ $slug ?: '...' }}</p>
                     </div>
                     <div class="flex gap-1.5">
                         @if($is_featured)
@@ -80,17 +82,17 @@
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                         <div>
                             <span class="text-xs text-neutral-400 block mb-0.5">Price</span>
-                            <span class="text-sm font-semibold text-neutral-800">₹{{ number_format($price ?: 0, 2) }}</span>
+                            <span class="text-sm font-semibold text-neutral-800">₹{{ number_format((float)($price ?: 0), 2) }}</span>
                         </div>
                         @if($sale_price)
                             <div>
                                 <span class="text-xs text-neutral-400 block mb-0.5">Sale Price</span>
-                                <span class="text-sm font-semibold text-emerald-600">₹{{ number_format($sale_price, 2) }}</span>
+                                <span class="text-sm font-semibold text-emerald-600">₹{{ number_format((float)$sale_price, 2) }}</span>
                             </div>
                         @endif
                         <div>
                             <span class="text-xs text-neutral-400 block mb-0.5">Cost</span>
-                            <span class="text-sm font-semibold text-neutral-500">₹{{ number_format($cost_price ?: 0, 2) }}</span>
+                            <span class="text-sm font-semibold text-neutral-500">₹{{ number_format((float)($cost_price ?: 0), 2) }}</span>
                         </div>
                         <div>
                             <span class="text-xs text-neutral-400 block mb-0.5">Stock</span>
@@ -101,9 +103,9 @@
                             <span class="text-sm font-mono text-neutral-600">{{ $sku ?: 'Auto' }}</span>
                         </div>
                     </div>
-                    @if($price && $cost_price)
+                    @if($price && $cost_price && (float)$price > 0)
                         <div class="mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-[10px] font-bold text-blue-700 uppercase">
-                            Margin: {{ round((($price - $cost_price) / $price) * 100, 1) }}%
+                            Margin: {{ round((( (float)$price - (float)$cost_price) / (float)$price) * 100, 1) }}%
                         </div>
                     @endif
                 @else
@@ -111,16 +113,18 @@
                         <span class="text-xs text-neutral-400">{{ count($variants) }} Variant(s)</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             @foreach($variants as $idx => $v)
-                                <div class="flex flex-col gap-2 p-3 rounded-lg bg-white border border-neutral-200 shadow-sm">
+                                <div class="flex flex-col gap-2 p-3 rounded-lg bg-white border border-neutral-200 shadow-sm transition-all hover:shadow-md">
                                     <div class="flex items-center justify-between">
                                         <span class="text-xs font-semibold text-neutral-700">{{ $v['name'] }}</span>
-                                        <span @class([
-                                            'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
-                                            'bg-emerald-50 text-emerald-600' => $v['status'] ?? true,
-                                            'bg-neutral-100 text-neutral-400' => !($v['status'] ?? true),
-                                        ])>
+                                        <button type="button" 
+                                            wire:click="$set('variants.{{ $idx }}.status', {{ !($v['status'] ?? true) ? 'true' : 'false' }})"
+                                            @class([
+                                                'px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors',
+                                                'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' => $v['status'] ?? true,
+                                                'bg-neutral-50 text-neutral-400 hover:bg-neutral-100' => !($v['status'] ?? true),
+                                            ])>
                                             {{ ($v['status'] ?? true) ? 'Active' : 'Inactive' }}
-                                        </span>
+                                        </button>
                                     </div>
 
                                     {{-- Variant Images --}}
