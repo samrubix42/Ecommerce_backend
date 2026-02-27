@@ -23,58 +23,56 @@ class AdminSidebar
         return collect([
             (object) [
                 'title' => 'Dashboard',
-                'icon' => 'ri-dashboard-line',
+                'icon' => 'ri-layout-grid-line',
                 'url' => route('admin.dashboard'),
                 'hasSubmenu' => false,
                 'submenu' => [],
             ],
             (object) [
                 'title' => 'Categories',
-                'icon' => 'ri-folder-line',
+                'icon' => 'ri-folder-open-line',
                 'url' => route('admin.categories'),
                 'hasSubmenu' => false,
                 'submenu' => [],
             ],
             (object) [
                 'title' => 'Products',
-                'icon' => 'ri-product-hunt-line',
+                'icon' => 'ri-box-3-line',
                 'url' => 'javascript:void(0)',
                 'hasSubmenu' => true,
                 'submenu' => [
-
                     (object) [
-                        'title' => 'Manage Attributes',
-                        'icon' => 'ri-list-check',
-                        'url' => route('admin.attributes'),
-                    ],
-                    (object) [
-                        'title' => 'Product List',
-                        'icon' => 'ri-list-check',
+                        'title' => 'All Products',
+                        'icon' => 'ri-list-view',
                         'url' => route('admin.products.index'),
                     ],
                     (object) [
-                        'title' => 'Add Product',
-                        'icon' => 'ri-add-line',
+                        'title' => 'New Product',
+                        'icon' => 'ri-add-circle-line',
                         'url' => route('admin.add-product'),
+                    ],
+                    (object) [
+                        'title' => 'Attributes',
+                        'icon' => 'ri-settings-4-line',
+                        'url' => route('admin.attributes'),
                     ],
                 ],
             ],
-            (object) [
-                'title' => 'Coupons',
-                'icon' => 'ri-coupon-line',
-                'url' => route('admin.coupons'),
-                'hasSubmenu' => false,
-                'submenu' => [],
-            ],
-            (object) [
-                'title' => 'Stock',
-                'icon' => 'ri-inventory-2-line',
+             (object) [
+                'title' => 'Inventory',
+                'icon' => 'ri-database-2-line',
                 'url' => route('admin.stock'),
                 'hasSubmenu' => false,
                 'submenu' => [],
             ],
-
-
+            (object) [
+                'title' => 'Coupons',
+                'icon' => 'ri-ticket-2-line',
+                'url' => route('admin.coupons'),
+                'hasSubmenu' => false,
+                'submenu' => [],
+            ],
+           
         ]);
     }
 }
