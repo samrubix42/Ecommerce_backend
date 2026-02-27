@@ -137,10 +137,6 @@ class StockList extends Component
                 'reserved_quantity' => $afterReserved
             ]);
 
-            // Sync with ProductVariant legacy stock column
-            $inventory->variant->update([
-                'stock' => $after
-            ]);
 
             // Create Log
             InventoryLog::create([
@@ -171,16 +167,17 @@ class StockList extends Component
 
     public function getStockItems()
     {
-        // We query variants and their inventories
         return ProductVariant::query()
             ->with(['product', 'inventory', 'variantAttributes.attribute', 'variantAttributes.value'])
-            ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
-            ->select('product_variants.*')
             ->where(function ($q) {
-                $q->where('products.name', 'like', '%' . $this->search . '%')
-                    ->orWhere('product_variants.sku', 'like', '%' . $this->search . '%');
+                if ($this->search) {
+                    $q->where('sku', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('product', function ($pq) {
+                            $pq->where('name', 'like', '%' . $this->search . '%');
+                        });
+                }
             })
-            ->latest('product_variants.created_at')
+            ->latest()
             ->paginate(10);
     }
 
@@ -196,12 +193,12 @@ class StockList extends Component
     #[Layout('layouts.admin')]
     public function render()
     {
-        // Ensure every variant has an inventory record (Lazy initialization if missing)
         $variants = $this->getStockItems();
 
-        foreach ($variants as $variant) {
-            if (!$variant->inventory) {
-                $variant->inventory()->create([
+        // Ensure every variant on the current page has an inventory record
+        foreach ($variants->items() as $variant) {
+            if (!$variant->relationLoaded('inventory') || !$variant->inventory) {
+                $variant->inventory()->firstOrCreate([], [
                     'quantity' => 0,
                     'reserved_quantity' => 0,
                     'low_stock_threshold' => 5,

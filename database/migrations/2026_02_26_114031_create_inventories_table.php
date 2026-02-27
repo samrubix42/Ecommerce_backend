@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('quantity')->default(0); 
 
             $table->integer('reserved_quantity')->default(0);
-
+            
             $table->integer('low_stock_threshold')->default(5);
 
             $table->boolean('track_inventory')->default(true);

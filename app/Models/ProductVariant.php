@@ -16,8 +16,6 @@ class ProductVariant extends Model
         'price',
         'sale_price',
         'cost_price',
-        'stock',
-        'low_stock_alert',
         'weight',
         'dimensions',
         'is_default',

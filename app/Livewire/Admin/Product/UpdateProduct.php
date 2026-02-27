@@ -85,8 +85,8 @@ class UpdateProduct extends Component
                 $this->price = $defaultVariant->price;
                 $this->sale_price = $defaultVariant->sale_price;
                 $this->cost_price = $defaultVariant->cost_price;
-                $this->stock = $defaultVariant->inventory ? $defaultVariant->inventory->quantity : $defaultVariant->stock;
-                $this->low_stock_alert = $defaultVariant->inventory ? $defaultVariant->inventory->low_stock_threshold : ($defaultVariant->low_stock_alert ?? 5);
+                $this->stock = $defaultVariant->inventory ? $defaultVariant->inventory->quantity : 0;
+                $this->low_stock_alert = $defaultVariant->inventory ? $defaultVariant->inventory->low_stock_threshold : 5;
                 $this->track_inventory = $defaultVariant->inventory ? $defaultVariant->inventory->track_inventory : true;
                 $this->weight = $defaultVariant->weight;
             }
@@ -113,7 +113,7 @@ class UpdateProduct extends Component
                     'price' => $variant->price,
                     'sale_price' => $variant->sale_price,
                     'cost_price' => $variant->cost_price,
-                    'stock' => $variant->inventory ? $variant->inventory->quantity : $variant->stock,
+                    'stock' => $variant->inventory ? $variant->inventory->quantity : 0,
                     'status' => $variant->status,
                     'attributes' => $combo,
                     'exists' => true,
@@ -463,8 +463,6 @@ class UpdateProduct extends Component
                     'price' => $this->price,
                     'sale_price' => $this->sale_price ?: null,
                     'cost_price' => $this->cost_price ?: null,
-                    'stock' => $this->stock,
-                    'low_stock_alert' => $this->low_stock_alert ?: 5,
                     'weight' => $this->weight ?: null,
                 ]);
 
@@ -496,8 +494,6 @@ class UpdateProduct extends Component
                     'price' => $this->price,
                     'sale_price' => $this->sale_price ?: null,
                     'cost_price' => $this->cost_price ?: null,
-                    'stock' => $this->stock,
-                    'low_stock_alert' => $this->low_stock_alert ?: 5,
                     'weight' => $this->weight ?: null,
                     'is_default' => true,
                     'status' => true,
@@ -539,7 +535,6 @@ class UpdateProduct extends Component
                         'price' => $v['price'],
                         'sale_price' => $v['sale_price'] ?: null,
                         'cost_price' => $v['cost_price'] ?: null,
-                        'stock' => $v['stock'],
                         'is_default' => $i === 0,
                         'status' => $v['status'] ?? true,
                     ]);
@@ -585,7 +580,6 @@ class UpdateProduct extends Component
                         'price' => $v['price'],
                         'sale_price' => $v['sale_price'] ?: null,
                         'cost_price' => $v['cost_price'] ?: null,
-                        'stock' => $v['stock'] ?: 0,
                         'is_default' => $i === 0 && $this->product->variants()->where('is_default', true)->count() == 0,
                         'status' => $v['status'] ?? true,
                     ]);

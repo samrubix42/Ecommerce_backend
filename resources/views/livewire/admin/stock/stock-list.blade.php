@@ -51,22 +51,17 @@
                         {{ $variant->sku ?: '—' }}
                     </td>
                     <td class="px-6 py-5">
-                        <span class="font-bold {{ optional($variant->inventory)->quantity <= optional($variant->inventory)->low_stock_threshold ? 'text-rose-600' : 'text-slate-900' }}">
-                            {{ optional($variant->inventory)->quantity ?: 0 }}
+                        <span class="font-bold {{ $variant->inventory && $variant->inventory->quantity <= $variant->inventory->low_stock_threshold ? 'text-rose-600' : 'text-slate-900' }}">
+                            {{ $variant->inventory->quantity ?? 0 }}
                         </span>
                     </td>
                     <td class="px-6 py-5 text-slate-500">
-                        {{ optional($variant->inventory)->reserved_quantity ?: 0 }}
+                        {{ $variant->inventory->reserved_quantity ?? 0 }}
                     </td>
                     <td class="px-6 py-5">
-                        @php
-                        $inventory = $variant->inventory;
-                        $qty = optional($inventory)->quantity ?: 0;
-                        $threshold = optional($inventory)->low_stock_threshold ?: 5;
-                        @endphp
-                        @if($qty <= 0)
+                        @if(($variant->inventory->quantity ?? 0) <= 0)
                             <span class="text-rose-600 text-xs font-medium bg-rose-50 px-2 py-1 rounded-full">Out of Stock</span>
-                            @elseif($qty <= $threshold)
+                            @elseif(($variant->inventory->quantity ?? 0) <= ($variant->inventory->low_stock_threshold ?? 5))
                                 <span class="text-amber-600 text-xs font-medium bg-amber-50 px-2 py-1 rounded-full">Low Stock</span>
                                 @else
                                 <span class="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-full">In Stock</span>
@@ -75,7 +70,7 @@
                     <td class="px-6 py-5 text-right">
                         <div class="flex justify-end gap-2">
                             <button
-                                @click="$dispatch('open-adjustment-modal'); $wire.openAdjustmentModal({{ $variant->inventory->id }})"
+                                @click="$dispatch('open-adjustment-modal'); $wire.openAdjustmentModal({{ $variant->inventory->id ?? 0 }})"
                                 class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md text-xs hover:bg-blue-100 transition">
                                 Adjust
                             </button>
@@ -109,24 +104,19 @@
             <div class="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-slate-100">
                 <div>
                     <span class="text-slate-400 block text-xs">Quantity</span>
-                    <span class="font-bold {{ optional($variant->inventory)->quantity <= optional($variant->inventory)->low_stock_threshold ? 'text-rose-600' : 'text-slate-900' }}">
-                        {{ optional($variant->inventory)->quantity ?: 0 }}
+                    <span class="font-bold {{ ($variant->inventory->quantity ?? 0) <= ($variant->inventory->low_stock_threshold ?? 5) ? 'text-rose-600' : 'text-slate-900' }}">
+                        {{ $variant->inventory->quantity ?? 0 }}
                     </span>
                 </div>
                 <div>
                     <span class="text-slate-400 block text-xs">Reserved</span>
-                    <span>{{ optional($variant->inventory)->reserved_quantity ?: 0 }}</span>
+                    <span>{{ $variant->inventory->reserved_quantity ?? 0 }}</span>
                 </div>
             </div>
             <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                @php
-                $inventory = $variant->inventory;
-                $qty = optional($inventory)->quantity ?: 0;
-                $threshold = optional($inventory)->low_stock_threshold ?: 5;
-                @endphp
-                @if($qty <= 0)
+                @if(($variant->inventory->quantity ?? 0) <= 0)
                     <span class="text-[10px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase">Out of Stock</span>
-                    @elseif($qty <= $threshold)
+                    @elseif(($variant->inventory->quantity ?? 0) <= ($variant->inventory->low_stock_threshold ?? 5))
                         <span class="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase">Low Stock</span>
                         @else
                         <span class="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">In Stock</span>

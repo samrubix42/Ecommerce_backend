@@ -23,8 +23,6 @@ return new class extends Migration
             $table->decimal('sale_price', 12, 2)->nullable();
             $table->decimal('cost_price', 12, 2)->nullable(); // profit tracking
 
-            $table->integer('stock')->default(0);
-            $table->integer('low_stock_alert')->default(5);
 
             $table->decimal('weight', 8, 2)->nullable();
             $table->json('dimensions')->nullable(); // height, width, length

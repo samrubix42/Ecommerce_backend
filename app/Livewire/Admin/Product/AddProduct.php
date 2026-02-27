@@ -317,8 +317,6 @@ class AddProduct extends Component
                 'price' => $this->price,
                 'sale_price' => $this->sale_price ?: null,
                 'cost_price' => $this->cost_price ?: null,
-                'stock' => $this->stock,
-                'low_stock_alert' => $this->low_stock_alert ?: 5,
                 'weight' => $this->weight ?: null,
                 'is_default' => true,
                 'status' => true,
@@ -348,7 +346,6 @@ class AddProduct extends Component
                     'sku' => $v['sku'] ?: 'SKU-' . strtoupper(Str::random(8)),
                     'price' => $v['price'],
                     'cost_price' => $v['cost_price'] ?: null,
-                    'stock' => $v['stock'] ?: 0,
                     'is_default' => $i === 0,
                     'status' => $v['status'] ?? true,
                 ]);
