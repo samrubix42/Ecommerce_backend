@@ -114,11 +114,11 @@ class ProductList extends Component
     public function products()
     {
         return Product::query()
-            ->with(['category', 'defaultVariant', 'primaryImage', 'variants'])
+            ->with(['category', 'defaultVariant.inventory', 'primaryImage', 'variants.inventory'])
             ->when($this->search, function ($q) {
                 $q->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")
-                      ->orWhere('slug', 'like', "%{$this->search}%");
+                        ->orWhere('slug', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
@@ -130,6 +130,24 @@ class ProductList extends Component
     #[Layout('layouts.admin')]
     public function render()
     {
-        return view('livewire.admin.product.product-list');
+        $products = $this->products;
+
+        // Ensure every variant of every product on this page has an inventory record
+        foreach ($products->items() as $product) {
+            foreach ($product->variants as $variant) {
+                if (!$variant->relationLoaded('inventory') || !$variant->inventory) {
+                    $variant->inventory()->firstOrCreate([], [
+                        'quantity' => 0,
+                        'reserved_quantity' => 0,
+                        'low_stock_threshold' => 5,
+                        'track_inventory' => true
+                    ]);
+                }
+            }
+        }
+
+        return view('livewire.admin.product.product-list', [
+            'products' => $products
+        ]);
     }
 }

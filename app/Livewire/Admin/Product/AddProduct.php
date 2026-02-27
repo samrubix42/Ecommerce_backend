@@ -322,12 +322,15 @@ class AddProduct extends Component
                 'status' => true,
             ]);
 
-            // Create Inventory
-            $inventory = $variant->inventory()->create([
-                'quantity' => $this->stock,
-                'low_stock_threshold' => $this->low_stock_alert ?: 5,
-                'track_inventory' => $this->track_inventory
-            ]);
+            // Update/Create Inventory (Model boot method handles initial creation)
+            $inventory = $variant->inventory()->updateOrCreate(
+                ['product_variant_id' => $variant->id],
+                [
+                    'quantity' => $this->stock,
+                    'low_stock_threshold' => $this->low_stock_alert ?: 5,
+                    'track_inventory' => $this->track_inventory
+                ]
+            );
 
             // Create Initial Log if stock > 0
             if ($this->stock > 0) {
@@ -350,12 +353,15 @@ class AddProduct extends Component
                     'status' => $v['status'] ?? true,
                 ]);
 
-                // Create Inventory
-                $inventory = $variant->inventory()->create([
-                    'quantity' => $v['stock'] ?: 0,
-                    'low_stock_threshold' => 5, // Default
-                    'track_inventory' => $this->track_inventory
-                ]);
+                // Update/Create Inventory (Model boot method handles initial creation)
+                $inventory = $variant->inventory()->updateOrCreate(
+                    ['product_variant_id' => $variant->id],
+                    [
+                        'quantity' => $v['stock'] ?: 0,
+                        'low_stock_threshold' => 5, // Default
+                        'track_inventory' => $this->track_inventory
+                    ]
+                );
 
                 // Create Initial Log if stock > 0
                 if (($v['stock'] ?? 0) > 0) {

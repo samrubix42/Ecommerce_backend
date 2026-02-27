@@ -52,7 +52,7 @@
                    focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition">
             <option value="">All Categories</option>
             @foreach($this->categories as $cat)
-                <option value="{{ $cat->id }}">{{ $cat->title }}</option>
+            <option value="{{ $cat->id }}">{{ $cat->title }}</option>
             @endforeach
         </select>
     </div>
@@ -78,7 +78,7 @@
 
             <tbody class="divide-y divide-slate-100">
 
-                @forelse($this->products as $product)
+                @forelse($products as $product)
 
                 <tr wire:key="product-{{ $product->id }}"
                     class="hover:bg-slate-50 transition">
@@ -87,19 +87,19 @@
                     <td class="px-6 py-5">
                         <div class="flex items-center gap-3">
                             @if($product->primaryImage)
-                                <img src="{{ asset('storage/' . $product->primaryImage->image_path) }}"
-                                     class="h-10 w-10 rounded-lg object-cover border border-slate-200"
-                                     alt="{{ $product->name }}">
+                            <img src="{{ asset('storage/' . $product->primaryImage->image_path) }}"
+                                class="h-10 w-10 rounded-lg object-cover border border-slate-200"
+                                alt="{{ $product->name }}">
                             @else
-                                <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">
-                                    <i class="ri-image-line text-lg"></i>
-                                </div>
+                            <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">
+                                <i class="ri-image-line text-lg"></i>
+                            </div>
                             @endif
 
                             <div>
                                 <p class="font-medium text-slate-900 line-clamp-1">{{ $product->name }}</p>
                                 @if($product->defaultVariant)
-                                    <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $product->defaultVariant->sku }}</p>
+                                <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $product->defaultVariant->sku }}</p>
                                 @endif
                             </div>
                         </div>
@@ -108,93 +108,93 @@
                     {{-- Category --}}
                     <td class="px-6 py-5">
                         @if($product->category)
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-600">
-                                <i class="ri-folder-3-line text-xs"></i>
-                                {{ $product->category->title }}
-                            </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-600">
+                            <i class="ri-folder-3-line text-xs"></i>
+                            {{ $product->category->title }}
+                        </span>
                         @else
-                            <span class="text-xs text-slate-300">—</span>
+                        <span class="text-xs text-slate-300">—</span>
                         @endif
                     </td>
 
                     {{-- Price --}}
                     <td class="px-6 py-5">
                         @if($product->defaultVariant)
-                            <p class="font-medium text-slate-900">₹{{ number_format($product->defaultVariant->price, 2) }}</p>
-                            @if($product->defaultVariant->sale_price)
-                                <p class="text-xs text-emerald-600 mt-0.5">
-                                    <i class="ri-arrow-down-line text-[10px]"></i>
-                                    ₹{{ number_format($product->defaultVariant->sale_price, 2) }}
-                                </p>
-                            @endif
+                        <p class="font-medium text-slate-900">₹{{ number_format($product->defaultVariant->price, 2) }}</p>
+                        @if($product->defaultVariant->sale_price)
+                        <p class="text-xs text-emerald-600 mt-0.5">
+                            <i class="ri-arrow-down-line text-[10px]"></i>
+                            ₹{{ number_format($product->defaultVariant->sale_price, 2) }}
+                        </p>
+                        @endif
                         @elseif($product->has_variants && $product->variants->count() > 0)
-                            @php
-                                $minPrice = $product->variants->min('price');
-                                $maxPrice = $product->variants->max('price');
-                            @endphp
-                            <p class="font-medium text-slate-900">
-                                ₹{{ number_format($minPrice, 2) }}
-                                @if($minPrice != $maxPrice)
-                                    – ₹{{ number_format($maxPrice, 2) }}
-                                @endif
-                            </p>
+                        @php
+                        $minPrice = $product->variants->min('price');
+                        $maxPrice = $product->variants->max('price');
+                        @endphp
+                        <p class="font-medium text-slate-900">
+                            ₹{{ number_format($minPrice, 2) }}
+                            @if($minPrice != $maxPrice)
+                            – ₹{{ number_format($maxPrice, 2) }}
+                            @endif
+                        </p>
                         @else
-                            <span class="text-xs text-slate-300">—</span>
+                        <span class="text-xs text-slate-300">—</span>
                         @endif
                     </td>
 
                     {{-- Stock --}}
                     <td class="px-6 py-5">
                         @php
-                            $totalStock = $product->variants->sum('stock');
-                            $lowAlert = $product->defaultVariant->low_stock_alert ?? 5;
+                        $totalStock = $product->variants->sum(fn($v) => $v->inventory->quantity ?? 0);
+                        $lowAlert = $product->defaultVariant->inventory->low_stock_threshold ?? 5;
                         @endphp
                         <div class="flex items-center gap-1.5">
                             @if($totalStock <= 0)
                                 <span class="w-2 h-2 rounded-full bg-red-500"></span>
                                 <span class="text-xs font-medium text-red-600">Out of stock</span>
-                            @elseif($totalStock <= $lowAlert)
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <span class="text-xs font-medium text-amber-600">{{ $totalStock }} left</span>
-                            @else
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span class="text-xs font-medium text-slate-700">{{ $totalStock }}</span>
-                            @endif
+                                @elseif($totalStock <= $lowAlert)
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <span class="text-xs font-medium text-amber-600">{{ $totalStock }} left</span>
+                                    @else
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span class="text-xs font-medium text-slate-700">{{ $totalStock }}</span>
+                                    @endif
                         </div>
                     </td>
 
                     {{-- Type --}}
                     <td class="px-6 py-5">
                         @if($product->has_variants)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-xs font-medium">
-                                <i class="ri-stack-line text-[10px]"></i>
-                                {{ $product->variants->count() }} variants
-                            </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-xs font-medium">
+                            <i class="ri-stack-line text-[10px]"></i>
+                            {{ $product->variants->count() }} variants
+                        </span>
                         @else
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 text-xs font-medium">
-                                <i class="ri-checkbox-blank-circle-line text-[10px]"></i>
-                                Simple
-                            </span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 text-xs font-medium">
+                            <i class="ri-checkbox-blank-circle-line text-[10px]"></i>
+                            Simple
+                        </span>
                         @endif
                     </td>
 
                     {{-- Status --}}
                     <td class="px-6 py-5">
                         @if($product->status === 'active')
-                            <span class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Active
-                            </span>
+                        <span class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active
+                        </span>
                         @elseif($product->status === 'draft')
-                            <span class="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
-                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                Draft
-                            </span>
+                        <span class="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            Draft
+                        </span>
                         @else
-                            <span class="inline-flex items-center gap-1 text-slate-400 text-xs font-medium">
-                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                Inactive
-                            </span>
+                        <span class="inline-flex items-center gap-1 text-slate-400 text-xs font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Inactive
+                        </span>
                         @endif
                     </td>
 
@@ -250,7 +250,7 @@
     ═══════════════════════════════════════ --}}
     <div class="sm:hidden space-y-4">
 
-        @forelse($this->products as $product)
+        @forelse($products as $product)
 
         <div wire:key="mobile-product-{{ $product->id }}"
             class="bg-white border border-slate-200 rounded-md p-4 shadow-sm space-y-3">
@@ -258,34 +258,34 @@
             <div class="flex items-start gap-3">
                 {{-- Image --}}
                 @if($product->primaryImage)
-                    <img src="{{ asset('storage/' . $product->primaryImage->image_path) }}"
-                         class="h-12 w-12 rounded-lg object-cover border border-slate-200"
-                         alt="{{ $product->name }}">
+                <img src="{{ asset('storage/' . $product->primaryImage->image_path) }}"
+                    class="h-12 w-12 rounded-lg object-cover border border-slate-200"
+                    alt="{{ $product->name }}">
                 @else
-                    <div class="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">
-                        <i class="ri-image-line text-lg"></i>
-                    </div>
+                <div class="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">
+                    <i class="ri-image-line text-lg"></i>
+                </div>
                 @endif
 
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-slate-900 truncate">{{ $product->name }}</p>
 
                     @if($product->category)
-                        <p class="text-xs text-slate-400 mt-0.5">{{ $product->category->title }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $product->category->title }}</p>
                     @endif
 
                     {{-- Price --}}
                     <div class="mt-1">
                         @if($product->defaultVariant)
-                            <span class="text-sm font-semibold text-slate-900">₹{{ number_format($product->defaultVariant->price, 2) }}</span>
+                        <span class="text-sm font-semibold text-slate-900">₹{{ number_format($product->defaultVariant->price, 2) }}</span>
                         @elseif($product->has_variants && $product->variants->count() > 0)
-                            @php
-                                $min = $product->variants->min('price');
-                                $max = $product->variants->max('price');
-                            @endphp
-                            <span class="text-sm font-semibold text-slate-900">
-                                ₹{{ number_format($min, 2) }}@if($min != $max) – ₹{{ number_format($max, 2) }}@endif
-                            </span>
+                        @php
+                        $min = $product->variants->min('price');
+                        $max = $product->variants->max('price');
+                        @endphp
+                        <span class="text-sm font-semibold text-slate-900">
+                            ₹{{ number_format($min, 2) }}@if($min != $max) – ₹{{ number_format($max, 2) }}@endif
+                        </span>
                         @endif
                     </div>
                 </div>
@@ -295,27 +295,27 @@
                 <div class="flex items-center gap-3">
                     {{-- Status --}}
                     @if($product->status === 'active')
-                        <span class="text-xs font-medium text-emerald-600">Active</span>
+                    <span class="text-xs font-medium text-emerald-600">Active</span>
                     @elseif($product->status === 'draft')
-                        <span class="text-xs font-medium text-amber-600">Draft</span>
+                    <span class="text-xs font-medium text-amber-600">Draft</span>
                     @else
-                        <span class="text-xs font-medium text-slate-400">Inactive</span>
+                    <span class="text-xs font-medium text-slate-400">Inactive</span>
                     @endif
 
                     {{-- Type --}}
                     @if($product->has_variants)
-                        <span class="text-xs text-violet-600">{{ $product->variants->count() }} variants</span>
+                    <span class="text-xs text-violet-600">{{ $product->variants->count() }} variants</span>
                     @else
-                        <span class="text-xs text-sky-600">Simple</span>
+                    <span class="text-xs text-sky-600">Simple</span>
                     @endif
 
                     {{-- Stock --}}
-                    @php $totalStock = $product->variants->sum('stock'); @endphp
+                    @php $totalStock = $product->variants->sum(fn($v) => $v->inventory->quantity ?? 0); @endphp
                     @if($totalStock <= 0)
                         <span class="text-xs text-red-600">Out of stock</span>
-                    @else
+                        @else
                         <span class="text-xs text-slate-500">{{ $totalStock }} in stock</span>
-                    @endif
+                        @endif
                 </div>
 
                 <div class="flex gap-2">
@@ -353,23 +353,23 @@
          PAGINATION
     ═══════════════════════════════════════ --}}
     @if($this->products->hasPages())
-        <div class="pt-2">
-            {{ $this->products->links() }}
-        </div>
+    <div class="pt-2">
+        {{ $this->products->links() }}
+    </div>
     @endif
 
     {{-- ═══════════════════════════════════════
          DELETE CONFIRMATION MODAL
     ═══════════════════════════════════════ --}}
     <div x-data="{ deleteOpen: false }"
-         x-on:open-delete-modal.window="deleteOpen = true"
-         x-on:close-delete-modal.window="deleteOpen = false"
-         x-cloak>
+        x-on:open-delete-modal.window="deleteOpen = true"
+        x-on:close-delete-modal.window="deleteOpen = false"
+        x-cloak>
         <template x-teleport="body">
             <div x-show="deleteOpen" class="fixed inset-0 z-[99] flex items-center justify-center px-4">
                 <div @click="deleteOpen=false" class="absolute inset-0 bg-black/40"></div>
                 <div x-show="deleteOpen" x-transition x-trap.inert.noscroll="deleteOpen"
-                     class="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+                    class="relative w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
 
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">

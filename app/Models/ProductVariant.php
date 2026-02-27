@@ -9,6 +9,18 @@ class ProductVariant extends Model
 {
     use SoftDeletes;
 
+    protected static function booted()
+    {
+        static::created(function ($variant) {
+            $variant->inventory()->create([
+                'quantity' => 0,
+                'reserved_quantity' => 0,
+                'low_stock_threshold' => 5,
+                'track_inventory' => true
+            ]);
+        });
+    }
+
     protected $fillable = [
         'product_id',
         'sku',
