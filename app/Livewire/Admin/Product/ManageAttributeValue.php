@@ -43,7 +43,7 @@ class ManageAttributeValue extends Component
 
     public function resetForm()
     {
-        $this->reset(['name','status','attributeId']);
+        $this->reset(['name', 'status', 'attributeId']);
         $this->status = true;
     }
 
@@ -201,7 +201,8 @@ class ManageAttributeValue extends Component
         while (AttributeValue::where('attribute_id', $attributeId)
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
             ->where('slug', $slug)
-            ->exists()) {
+            ->exists()
+        ) {
             $slug = $baseSlug . '-' . $i++;
         }
 
@@ -259,12 +260,13 @@ class ManageAttributeValue extends Component
         // If still failing, throw last exception
         throw new \RuntimeException('Unable to create unique attribute value slug after retries.');
     }
-    
+
 
     #[Layout('layouts.admin')]
     public function render()
     {
         $attributeList = Attribute::where('name', 'like', "%{$this->search}%")
+            ->withCount('values')
             ->latest()
             ->paginate(10);
 
