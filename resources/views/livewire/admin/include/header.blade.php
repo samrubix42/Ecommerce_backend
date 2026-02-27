@@ -13,7 +13,6 @@
 
             <h1 class="text-[15px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
                 <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px] uppercase font-black">Admin</span>
-                Control Center
             </h1>
         </div>
 
