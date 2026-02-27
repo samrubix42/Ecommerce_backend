@@ -64,9 +64,21 @@ class StockList extends Component
 
         if (!$inventory->track_inventory) {
             $this->dispatch('toast-show', [
-                'message' => 'Tracking is disabled for this item. Enable "Track Inventory" in product settings to make adjustments.',
                 'type' => 'warning',
                 'position' => 'top-right',
+                'html' => '
+                    <div class="p-4 flex items-start gap-3">
+                        <div class="text-orange-400 mt-0.5">
+                            <i class="ri-error-warning-line text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[13px] font-bold text-gray-800">Inventory Tracking Disabled</p>
+                            <p class="text-xs text-gray-500 mt-1 leading-normal">
+                                Please enable <b>Track Inventory</b> in product settings to allow stock adjustments.
+                            </p>
+                        </div>
+                    </div>
+                '
             ]);
             $this->dispatch('close-adjustment-modal');
             return;
