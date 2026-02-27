@@ -124,20 +124,20 @@ class StockList extends Component
 
                 if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
                     if ($before < $qtyChange) {
-                        throw new \Exception("Insufficient stock available.");
+                        throw new \Exception("Insufficient Available Stock|Your warehouse currently only has <b>{$before}</b> units available. You cannot remove or sell <b>{$qtyChange}</b> units.");
                     }
                     $after = $before - $qtyChange;
                 } elseif (in_array($this->adjustmentType, ['stock_in', 'return', 'adjustment'])) {
                     $after = $before + $qtyChange;
                 } elseif ($this->adjustmentType === 'reserved') {
                     if ($before < $qtyChange) {
-                        throw new \Exception("Insufficient available stock to reserve.");
+                        throw new \Exception("Insufficient Stock to Reserve|You are trying to reserve <b>{$qtyChange}</b> units, but only <b>{$before}</b> units are available in sellable stock.");
                     }
                     $after = $before - $qtyChange; // Take FROM quantity
                     $afterReserved = $beforeReserved + $qtyChange; // Add TO reserved
                 } elseif ($this->adjustmentType === 'released') {
                     if ($beforeReserved < $qtyChange) {
-                        throw new \Exception("Insufficient reserved stock to release.");
+                        throw new \Exception("Insufficient Reserved Stock|There are only <b>{$beforeReserved}</b> units currently reserved. You cannot release <b>{$qtyChange}</b> units.");
                     }
                     $afterReserved = $beforeReserved - $qtyChange; // Take FROM reserved
                     $after = $before + $qtyChange; // Add back TO quantity
@@ -172,10 +172,24 @@ class StockList extends Component
             $this->dispatch('close-adjustment-modal');
             $this->resetAdjustmentForm();
         } catch (\Exception $e) {
+            $parts = explode('|', $e->getMessage());
+            $title = $parts[0] ?? 'Inventory Error';
+            $desc = $parts[1] ?? 'An unexpected error occurred during the stock adjustment.';
+
             $this->dispatch('toast-show', [
-                'message' => $e->getMessage(),
-                'type' => 'error',
+                'type' => 'warning',
                 'position' => 'top-right',
+                'html' => '
+                    <div class="p-4 flex items-start gap-3">
+                        <div class="text-orange-400 mt-0.5">
+                            <i class="ri-error-warning-line text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[13px] font-bold text-gray-800">' . $title . '</p>
+                            <p class="text-xs text-gray-500 mt-1 leading-normal">' . $desc . '</p>
+                        </div>
+                    </div>
+                '
             ]);
         }
     }
