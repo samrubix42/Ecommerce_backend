@@ -39,26 +39,34 @@
                         <!-- Adjustment Type -->
                         <div>
                             <label class="text-xs font-medium text-slate-600">Adjustment Type</label>
-                            <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1.5">
+                            <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-1.5">
                                 <label class="cursor-pointer">
                                     <input type="radio" wire:model.live="adjustmentType" value="stock_in" class="peer hidden">
-                                    <div class="px-2 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-600 transition text-[10px] font-bold uppercase"> In</div>
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-600 transition text-[9px] font-bold uppercase"> In</div>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" wire:model.live="adjustmentType" value="stock_out" class="peer hidden">
-                                    <div class="px-2 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-rose-500 peer-checked:bg-rose-50 peer-checked:text-rose-600 transition text-[10px] font-bold uppercase"> Out</div>
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-rose-500 peer-checked:bg-rose-50 peer-checked:text-rose-600 transition text-[9px] font-bold uppercase"> Out</div>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" wire:model.live="adjustmentType" value="sale" class="peer hidden">
-                                    <div class="px-2 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition text-[10px] font-bold uppercase"> Sale</div>
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 transition text-[9px] font-bold uppercase"> Sale</div>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" wire:model.live="adjustmentType" value="return" class="peer hidden">
-                                    <div class="px-2 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600 transition text-[10px] font-bold uppercase"> Return</div>
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600 transition text-[9px] font-bold uppercase"> Return</div>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" wire:model.live="adjustmentType" value="adjustment" class="peer hidden">
-                                    <div class="px-2 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition text-[10px] font-bold uppercase"> Adjust</div>
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition text-[9px] font-bold uppercase"> Adjust</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" wire:model.live="adjustmentType" value="reserved" class="peer hidden">
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-600 transition text-[9px] font-bold uppercase"> Reserve</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" wire:model.live="adjustmentType" value="released" class="peer hidden">
+                                    <div class="px-1 py-2 text-center rounded-lg border border-slate-200 peer-checked:border-slate-500 peer-checked:bg-slate-100 peer-checked:text-slate-600 transition text-[9px] font-bold uppercase"> Release</div>
                                 </label>
                             </div>
                             @error('adjustmentType')
@@ -78,10 +86,62 @@
                             @enderror
                         </div>
 
+                        <!-- Reference Row -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-medium text-slate-600">Reference Type</label>
+                                <select wire:model.live="reference_type"
+                                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2
+                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                                    <option value="">None</option>
+                                    <option value="Order">Order</option>
+                                    <option value="Customer">Customer</option>
+                                    <option value="Supplier">Supplier</option>
+                                    <option value="ProductVariant">SKU / Variant</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                @if($reference_type === 'ProductVariant')
+                                <label class="text-xs font-medium text-slate-600">Search SKU</label>
+                                <div class="relative">
+                                    <input type="text" wire:model.live="skuSearch"
+                                        placeholder="Enter SKU..."
+                                        class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2
+                                                      focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+
+                                    @if(!empty($suggestedVariants))
+                                    <div class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden">
+                                        @foreach($suggestedVariants as $variant)
+                                        <button type="button"
+                                            wire:click="selectReferenceVariant({{ $variant['id'] }}, '{{ $variant['sku'] }}')"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 text-xs transition border-b border-slate-100 last:border-b-0">
+                                            <span class="font-bold text-slate-700">{{ $variant['sku'] }}</span>
+                                            <span class="text-slate-500 ml-1">({{ $variant['product']['name'] }})</span>
+                                        </button>
+                                        @endforeach
+                                    </div>
+                                    @endif
+                                </div>
+                                <input type="hidden" wire:model="reference_id">
+                                @else
+                                <label class="text-xs font-medium text-slate-600">Reference ID (Optional)</label>
+                                <input type="number" wire:model="reference_id"
+                                    placeholder="e.g. 1024"
+                                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2
+                                                  focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none">
+                                @endif
+                                @error('reference_id')
+                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
                         <!-- Note -->
                         <div>
-                            <label class="text-xs font-medium text-slate-600">Note / Reference (Optional)</label>
-                            <textarea wire:model="adjustmentNote" rows="3"
+                            <label class="text-xs font-medium text-slate-600">Note (Optional)</label>
+                            <textarea wire:model="adjustmentNote" rows="2"
                                 placeholder="e.g. Added stock from supplier X"
                                 class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2
                                              focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-none"></textarea>

@@ -23,7 +23,9 @@ return new class extends Migration
                 'stock_out',
                 'sale',
                 'return',
-                'adjustment'
+                'adjustment',
+                'reserved',
+                'released'
             ]);
 
             $table->integer('quantity');

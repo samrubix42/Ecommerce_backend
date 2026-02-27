@@ -21,16 +21,24 @@ class StockList extends Component
     // Adjustment Modal State
     public ?int $selectedInventoryId = null;
     public $adjustmentQuantity = 0;
-    public string $adjustmentType = 'stock_in'; // stock_in, stock_out, adjustment
+    public string $adjustmentType = 'stock_in'; // stock_in, stock_out, adjustment, sale, return, reserved, released
     public string $adjustmentNote = '';
+    public ?string $reference_type = null;
+    public ?int $reference_id = null;
+
+    // SKU Search for Reference
+    public string $skuSearch = '';
+    public $suggestedVariants = [];
 
     // History Modal State
     public ?int $selectedHistoryInventoryId = null;
 
     protected $rules = [
         'adjustmentQuantity' => 'required|integer|min:1',
-        'adjustmentType' => 'required|in:stock_in,stock_out,adjustment,sale,return',
+        'adjustmentType' => 'required|in:stock_in,stock_out,adjustment,sale,return,reserved,released',
         'adjustmentNote' => 'nullable|string|max:255',
+        'reference_type' => 'nullable|string',
+        'reference_id' => 'nullable|integer',
     ];
 
     /* =========================
@@ -52,8 +60,29 @@ class StockList extends Component
 
     public function resetAdjustmentForm()
     {
-        $this->reset(['selectedInventoryId', 'adjustmentQuantity', 'adjustmentNote']);
+        $this->reset(['selectedInventoryId', 'adjustmentQuantity', 'adjustmentNote', 'reference_type', 'reference_id', 'skuSearch', 'suggestedVariants']);
         $this->adjustmentType = 'stock_in';
+    }
+
+    public function updatedSkuSearch($value)
+    {
+        if (strlen($value) < 2) {
+            $this->suggestedVariants = [];
+            return;
+        }
+
+        $this->suggestedVariants = ProductVariant::where('sku', 'like', '%' . $value . '%')
+            ->with('product')
+            ->limit(5)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectReferenceVariant($variantId, $sku)
+    {
+        $this->reference_id = $variantId;
+        $this->skuSearch = $sku;
+        $this->suggestedVariants = [];
     }
 
     public function applyAdjustment()
@@ -85,20 +114,27 @@ class StockList extends Component
         }
 
         $before = $inventory->quantity;
-
+        $beforeReserved = $inventory->reserved_quantity;
         $qtyChange = (int) $this->adjustmentQuantity;
 
-        // If it's stock out or a sale, we subtract
-        if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
-            $qtyChange = -$qtyChange;
-        }
+        DB::transaction(function () use ($inventory, $before, $beforeReserved, $qtyChange) {
+            $after = $before;
+            $afterReserved = $beforeReserved;
 
-        $after = $before + $qtyChange;
+            if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
+                $after = $before - $qtyChange;
+            } elseif (in_array($this->adjustmentType, ['stock_in', 'return', 'adjustment'])) {
+                $after = $before + $qtyChange;
+            } elseif ($this->adjustmentType === 'reserved') {
+                $afterReserved = $beforeReserved + $qtyChange;
+            } elseif ($this->adjustmentType === 'released') {
+                $afterReserved = max(0, $beforeReserved - $qtyChange);
+            }
 
-        DB::transaction(function () use ($inventory, $before, $after, $qtyChange) {
             // Update Inventory
             $inventory->update([
-                'quantity' => $after
+                'quantity' => $after,
+                'reserved_quantity' => $afterReserved
             ]);
 
             // Sync with ProductVariant legacy stock column
@@ -111,8 +147,10 @@ class StockList extends Component
                 'inventory_id' => $inventory->id,
                 'type' => $this->adjustmentType,
                 'quantity' => abs($qtyChange),
-                'before_quantity' => $before,
-                'after_quantity' => $after,
+                'before_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $beforeReserved : $before,
+                'after_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $afterReserved : $after,
+                'reference_type' => $this->reference_type,
+                'reference_id' => $this->reference_id,
                 'note' => $this->adjustmentNote,
             ]);
         });

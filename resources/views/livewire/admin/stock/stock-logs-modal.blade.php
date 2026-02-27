@@ -60,11 +60,15 @@
                                         @elseif($log->type === 'stock_out') bg-rose-50 text-rose-600
                                         @elseif($log->type === 'sale') bg-blue-50 text-blue-600
                                         @elseif($log->type === 'return') bg-indigo-50 text-indigo-600
+                                        @elseif($log->type === 'reserved') bg-purple-50 text-purple-600
+                                        @elseif($log->type === 'released') bg-slate-100 text-slate-600
                                         @else bg-amber-50 text-amber-600 @endif">
                                         @if($log->type === 'stock_in') <i class="ri-add-line text-lg"></i>
                                         @elseif($log->type === 'stock_out') <i class="ri-subtract-line text-lg"></i>
                                         @elseif($log->type === 'sale') <i class="ri-shopping-cart-2-line text-base"></i>
                                         @elseif($log->type === 'return') <i class="ri-restart-line text-base"></i>
+                                        @elseif($log->type === 'reserved') <i class="ri-lock-line text-base"></i>
+                                        @elseif($log->type === 'released') <i class="ri-lock-unlock-line text-base"></i>
                                         @else <i class="ri-equalizer-line text-base"></i> @endif
                                     </div>
                                 </div>
@@ -79,9 +83,16 @@
                                                     @elseif($log->type === 'stock_out') text-rose-600
                                                     @elseif($log->type === 'sale') text-blue-600
                                                     @elseif($log->type === 'return') text-indigo-600
+                                                    @elseif($log->type === 'reserved') text-purple-600
+                                                    @elseif($log->type === 'released') text-slate-600
                                                     @else text-amber-600 @endif">
                                                     {{ str_replace('_', ' ', $log->type) }}
                                                 </span>
+                                                @if($log->reference_type)
+                                                <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
+                                                    REF: {{ $log->reference_type }} #{{ $log->reference_id }}
+                                                </span>
+                                                @endif
                                                 <span class="text-[11px] text-slate-400 font-medium">
                                                     {{ $log->created_at->format('M j, h:i A') }}
                                                 </span>
@@ -89,10 +100,14 @@
 
                                             <div class="flex items-baseline gap-2">
                                                 <h4 class="text-sm font-semibold text-slate-800">
-                                                    {{ in_array($log->type, ['stock_out', 'sale']) ? '-' : '+' }}{{ $log->quantity }} Units
+                                                    {{ in_array($log->type, ['stock_out', 'sale', 'released']) ? '-' : '+' }}{{ $log->quantity }} Units
                                                 </h4>
                                                 <span class="text-[11px] text-slate-400 font-medium">
+                                                    @if(in_array($log->type, ['reserved', 'released']))
+                                                    ({{ $log->type === 'reserved' ? 'Added to' : 'Removed from' }} reserved)
+                                                    @else
                                                     ({{ in_array($log->type, ['stock_out', 'sale']) ? 'Reduced from' : 'Added to' }} inventory)
+                                                    @endif
                                                 </span>
                                             </div>
 
@@ -105,7 +120,9 @@
 
                                         <!-- Ultra-Clean Stock Level -->
                                         <div class="flex flex-col items-start sm:items-end gap-1">
-                                            <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Balance</span>
+                                            <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                                                {{ in_array($log->type, ['reserved', 'released']) ? 'Reserved Balance' : 'Balance' }}
+                                            </span>
                                             <div class="flex items-center gap-2 text-sm font-mono tracking-tight">
                                                 <span class="text-slate-300">{{ $log->before_quantity }}</span>
                                                 <i class="ri-arrow-right-s-line text-slate-200"></i>
