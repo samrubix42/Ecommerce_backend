@@ -117,48 +117,67 @@ class StockList extends Component
         $beforeReserved = $inventory->reserved_quantity;
         $qtyChange = (int) $this->adjustmentQuantity;
 
-        DB::transaction(function () use ($inventory, $before, $beforeReserved, $qtyChange) {
-            $after = $before;
-            $afterReserved = $beforeReserved;
+        try {
+            DB::transaction(function () use ($inventory, $before, $beforeReserved, $qtyChange) {
+                $after = $before;
+                $afterReserved = $beforeReserved;
 
-            if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
-                $after = $before - $qtyChange;
-            } elseif (in_array($this->adjustmentType, ['stock_in', 'return', 'adjustment'])) {
-                $after = $before + $qtyChange;
-            } elseif ($this->adjustmentType === 'reserved') {
-                $afterReserved = $beforeReserved + $qtyChange;
-            } elseif ($this->adjustmentType === 'released') {
-                $afterReserved = max(0, $beforeReserved - $qtyChange);
-            }
+                if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
+                    if ($before < $qtyChange) {
+                        throw new \Exception("Insufficient stock available.");
+                    }
+                    $after = $before - $qtyChange;
+                } elseif (in_array($this->adjustmentType, ['stock_in', 'return', 'adjustment'])) {
+                    $after = $before + $qtyChange;
+                } elseif ($this->adjustmentType === 'reserved') {
+                    if ($before < $qtyChange) {
+                        throw new \Exception("Insufficient available stock to reserve.");
+                    }
+                    $after = $before - $qtyChange; // Take FROM quantity
+                    $afterReserved = $beforeReserved + $qtyChange; // Add TO reserved
+                } elseif ($this->adjustmentType === 'released') {
+                    if ($beforeReserved < $qtyChange) {
+                        throw new \Exception("Insufficient reserved stock to release.");
+                    }
+                    $afterReserved = $beforeReserved - $qtyChange; // Take FROM reserved
+                    $after = $before + $qtyChange; // Add back TO quantity
+                }
 
-            // Update Inventory
-            $inventory->update([
-                'quantity' => $after,
-                'reserved_quantity' => $afterReserved
+                // Update Inventory
+                $inventory->update([
+                    'quantity' => $after,
+                    'reserved_quantity' => $afterReserved
+                ]);
+
+
+                // Create Log
+                InventoryLog::create([
+                    'inventory_id' => $inventory->id,
+                    'type' => $this->adjustmentType,
+                    'quantity' => abs($qtyChange),
+                    'before_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $beforeReserved : $before,
+                    'after_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $afterReserved : $after,
+                    'reference_type' => $this->reference_type,
+                    'reference_id' => $this->reference_id,
+                    'note' => $this->adjustmentNote,
+                ]);
+            });
+
+            $this->dispatch('toast-show', [
+                'message' => 'Stock adjusted successfully!',
+                'type' => 'success',
+                'position' => 'top-right',
             ]);
 
-
-            // Create Log
-            InventoryLog::create([
-                'inventory_id' => $inventory->id,
-                'type' => $this->adjustmentType,
-                'quantity' => abs($qtyChange),
-                'before_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $beforeReserved : $before,
-                'after_quantity' => in_array($this->adjustmentType, ['reserved', 'released']) ? $afterReserved : $after,
-                'reference_type' => $this->reference_type,
-                'reference_id' => $this->reference_id,
-                'note' => $this->adjustmentNote,
+            $this->dispatch('close-adjustment-modal');
+            $this->resetAdjustmentForm();
+        } catch (\Exception $e) {
+            $this->dispatch('toast-show', [
+                'message' => $e->getMessage(),
+                'type' => 'error',
+                'position' => 'top-right',
             ]);
-        });
-
-        $this->dispatch('toast-show', [
-            'message' => 'Stock adjusted successfully!',
-            'type' => 'success',
-            'position' => 'top-right',
-        ]);
-
-        $this->dispatch('close-adjustment-modal');
-        $this->resetAdjustmentForm();
+        }
     }
 
     /* =========================

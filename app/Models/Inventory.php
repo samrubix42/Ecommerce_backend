@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inventory extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'product_variant_id',
         'quantity',
         'reserved_quantity',
@@ -45,6 +45,8 @@ class Inventory extends Model
 
     public function getAvailableQuantityAttribute()
     {
-        return $this->quantity - $this->reserved_quantity;
+        // Now that quantity represents sellable stock, we return it directly. 
+        // Total physical stock would be (quantity + reserved_quantity).
+        return $this->quantity;
     }
 }
