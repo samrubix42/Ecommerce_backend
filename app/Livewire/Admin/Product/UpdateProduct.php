@@ -40,6 +40,7 @@ class UpdateProduct extends Component
     public $cost_price = '';
     public $stock = '';
     public $low_stock_alert = '5';
+    public $track_inventory = true;
     public $weight = '';
 
     // ── Step 3: Variants ──
@@ -57,8 +58,8 @@ class UpdateProduct extends Component
 
     public function mount(Product $product)
     {
-        $this->product = $product->load(['variants.attributes', 'images', 'category']);
-        
+        $this->product = $product->load(['variants.variantAttributes', 'variants.inventory', 'images', 'category']);
+
         // Load Basic Info
         $this->name = $this->product->name;
         $this->slug = $this->product->slug;
@@ -78,17 +79,18 @@ class UpdateProduct extends Component
                 $this->price = $defaultVariant->price;
                 $this->sale_price = $defaultVariant->sale_price;
                 $this->cost_price = $defaultVariant->cost_price;
-                $this->stock = $defaultVariant->stock;
-                $this->low_stock_alert = $defaultVariant->low_stock_alert;
+                $this->stock = $defaultVariant->inventory ? $defaultVariant->inventory->quantity : $defaultVariant->stock;
+                $this->low_stock_alert = $defaultVariant->inventory ? $defaultVariant->inventory->low_stock_threshold : ($defaultVariant->low_stock_alert ?? 5);
+                $this->track_inventory = $defaultVariant->inventory ? $defaultVariant->inventory->track_inventory : true;
                 $this->weight = $defaultVariant->weight;
             }
         } else {
             // Load Variants and selected attributes
             foreach ($this->product->variants as $variant) {
                 $combo = [];
-                foreach ($variant->attributes as $va) {
+                foreach ($variant->variantAttributes as $va) {
                     $combo[$va->attribute_id] = $va->attribute_value_id;
-                    
+
                     // Populate selectedAttributes for UI
                     if (!isset($this->selectedAttributes[(string)$va->attribute_id])) {
                         $this->selectedAttributes[(string)$va->attribute_id] = [];
@@ -105,7 +107,7 @@ class UpdateProduct extends Component
                     'price' => $variant->price,
                     'sale_price' => $variant->sale_price,
                     'cost_price' => $variant->cost_price,
-                    'stock' => $variant->stock,
+                    'stock' => $variant->inventory ? $variant->inventory->quantity : $variant->stock,
                     'status' => $variant->status,
                     'attributes' => $combo,
                     'exists' => true,
@@ -316,7 +318,7 @@ class UpdateProduct extends Component
     {
         $existingVariants = $this->variants;
         $this->variants = [];
-        
+
         $active = array_filter($this->selectedAttributes, fn($v) => !empty($v));
         if (empty($active)) return;
 
@@ -376,10 +378,10 @@ class UpdateProduct extends Component
         if ($image) {
             Storage::disk('public')->delete($image->image_path);
             $image->delete();
-            
+
             // Re-index parent product images
             $this->existingImages = array_values(array_filter($this->existingImages, fn($img) => (int)$img['id'] !== $imageId));
-            
+
             // Re-index variant-specific images
             $newVariantImages = [];
             foreach ($this->existingVariantImages as $vId => $imgs) {
@@ -393,12 +395,12 @@ class UpdateProduct extends Component
     {
         // 1. Reset all images for this product to NOT primary
         ProductImage::where('product_id', $this->product->id)->update(['is_primary' => false]);
-        
+
         // 2. Set the selected one as primary
         $image = ProductImage::find($imageId);
         if ($image) {
             $image->update(['is_primary' => true]);
-            
+
             // 3. Sync local state
             foreach ($this->existingImages as &$img) {
                 $img['is_primary'] = ($img['id'] === $imageId);
@@ -445,9 +447,10 @@ class UpdateProduct extends Component
         if (!$this->has_variants) {
             // Delete old variants if they existed (except default if simple)
             $this->product->variants()->where('is_default', false)->delete();
-            
+
             $defaultVariant = $this->product->variants()->where('is_default', true)->first();
             if ($defaultVariant) {
+                $oldStock = $defaultVariant->inventory ? $defaultVariant->inventory->quantity : $defaultVariant->stock;
                 $defaultVariant->update([
                     'sku' => $this->sku,
                     'barcode' => $this->barcode ?: null,
@@ -458,8 +461,30 @@ class UpdateProduct extends Component
                     'low_stock_alert' => $this->low_stock_alert ?: 5,
                     'weight' => $this->weight ?: null,
                 ]);
+
+                // Update/Create Inventory
+                $inventory = $defaultVariant->inventory()->updateOrCreate(
+                    ['product_variant_id' => $defaultVariant->id],
+                    [
+                        'quantity' => $this->stock,
+                        'low_stock_threshold' => $this->low_stock_alert ?: 5,
+                        'track_inventory' => $this->track_inventory
+                    ]
+                );
+
+                // Log if quantity changed
+                if ($oldStock != $this->stock) {
+                    \App\Models\InventoryLog::create([
+                        'inventory_id' => $inventory->id,
+                        'type' => 'adjustment',
+                        'quantity' => abs($this->stock - $oldStock),
+                        'before_quantity' => $oldStock,
+                        'after_quantity' => $this->stock,
+                        'note' => 'Manual adjustment via product edit',
+                    ]);
+                }
             } else {
-                $this->product->variants()->create([
+                $variant = $this->product->variants()->create([
                     'sku' => $this->sku ?: 'SKU-' . strtoupper(Str::random(8)),
                     'barcode' => $this->barcode ?: null,
                     'price' => $this->price,
@@ -471,6 +496,25 @@ class UpdateProduct extends Component
                     'is_default' => true,
                     'status' => true,
                 ]);
+
+                // Create Inventory
+                $inventory = $variant->inventory()->create([
+                    'quantity' => $this->stock,
+                    'low_stock_threshold' => $this->low_stock_alert ?: 5,
+                    'track_inventory' => $this->track_inventory
+                ]);
+
+                // Create Initial Log if stock > 0
+                if ($this->stock > 0) {
+                    \App\Models\InventoryLog::create([
+                        'inventory_id' => $inventory->id,
+                        'type' => 'stock_in',
+                        'quantity' => $this->stock,
+                        'before_quantity' => 0,
+                        'after_quantity' => $this->stock,
+                        'note' => 'Initial stock on product variant creation',
+                    ]);
+                }
             }
         } else {
             // For Variant Products
@@ -483,6 +527,7 @@ class UpdateProduct extends Component
             foreach ($this->variants as $i => $v) {
                 if (isset($v['id'])) {
                     $variant = ProductVariant::find($v['id']);
+                    $oldStock = $variant->inventory ? $variant->inventory->quantity : $variant->stock;
                     $variant->update([
                         'sku' => $v['sku'],
                         'price' => $v['price'],
@@ -492,6 +537,28 @@ class UpdateProduct extends Component
                         'is_default' => $i === 0,
                         'status' => $v['status'] ?? true,
                     ]);
+
+                    // Update/Create Inventory
+                    $inventory = $variant->inventory()->updateOrCreate(
+                        ['product_variant_id' => $variant->id],
+                        [
+                            'quantity' => $v['stock'] ?: 0,
+                            'low_stock_threshold' => 5, // Default
+                            'track_inventory' => $this->track_inventory
+                        ]
+                    );
+
+                    // Log if quantity changed
+                    if ($oldStock != $v['stock']) {
+                        \App\Models\InventoryLog::create([
+                            'inventory_id' => $inventory->id,
+                            'type' => 'adjustment',
+                            'quantity' => abs($v['stock'] - $oldStock),
+                            'before_quantity' => $oldStock,
+                            'after_quantity' => $v['stock'],
+                            'note' => 'Manual adjustment via product edit',
+                        ]);
+                    }
 
                     // Handle variant images update
                     if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {
@@ -516,6 +583,25 @@ class UpdateProduct extends Component
                         'is_default' => $i === 0 && $this->product->variants()->where('is_default', true)->count() == 0,
                         'status' => $v['status'] ?? true,
                     ]);
+
+                    // Create Inventory
+                    $inventory = $variant->inventory()->create([
+                        'quantity' => $v['stock'] ?: 0,
+                        'low_stock_threshold' => 5, // Default
+                        'track_inventory' => $this->track_inventory
+                    ]);
+
+                    // Create Initial Log if stock > 0
+                    if (($v['stock'] ?? 0) > 0) {
+                        \App\Models\InventoryLog::create([
+                            'inventory_id' => $inventory->id,
+                            'type' => 'stock_in',
+                            'quantity' => $v['stock'],
+                            'before_quantity' => 0,
+                            'after_quantity' => $v['stock'],
+                            'note' => 'Initial stock on variant creation',
+                        ]);
+                    }
 
                     // Save Variant Images if uploaded
                     if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {

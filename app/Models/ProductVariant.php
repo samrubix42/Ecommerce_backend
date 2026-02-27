@@ -44,7 +44,7 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function attributes()
+    public function variantAttributes()
     {
         return $this->hasMany(VariantAttribute::class, 'product_variant_id');
     }
@@ -52,5 +52,21 @@ class ProductVariant extends Model
     public function images()
     {
         return $this->hasMany(ProductImage::class);
+    }
+
+    public function inventory()
+    {
+        return $this->hasOne(Inventory::class);
+    }
+
+    public function getNameAttribute()
+    {
+        if ($this->variantAttributes->isEmpty()) {
+            return 'Default Variant';
+        }
+
+        return $this->variantAttributes->map(function ($attr) {
+            return ($attr->attribute ? $attr->attribute->name . ': ' : '') . ($attr->value ? $attr->value->value : '');
+        })->implode(' / ');
     }
 }

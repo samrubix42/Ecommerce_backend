@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\Coupon\CouponList;
+use App\Livewire\Admin\Stock\StockList;
 use App\Livewire\Admin\Dashboard\Dashboard;
 use App\Livewire\Admin\Product\AddProduct;
 use App\Livewire\Admin\Product\ProductList;
@@ -29,6 +30,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         ->name('admin.update-product');
     Route::livewire('coupons', CouponList::class)
         ->name('admin.coupons');
+    Route::livewire('stock', StockList::class)
+        ->name('admin.stock');
 });
 
 Route::livewire('login', \App\Livewire\Auth\Login::class)

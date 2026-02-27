@@ -1,0 +1,170 @@
+<?php
+
+namespace App\Livewire\Admin\Stock;
+
+use App\Models\Inventory;
+use App\Models\InventoryLog;
+use App\Models\ProductVariant;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+class StockList extends Component
+{
+    use WithPagination;
+
+    #[Url]
+    public string $search = '';
+
+    // Adjustment Modal State
+    public ?int $selectedInventoryId = null;
+    public $adjustmentQuantity = 0;
+    public string $adjustmentType = 'stock_in'; // stock_in, stock_out, adjustment
+    public string $adjustmentNote = '';
+
+    // History Modal State
+    public ?int $selectedHistoryInventoryId = null;
+
+    protected $rules = [
+        'adjustmentQuantity' => 'required|integer|min:1',
+        'adjustmentType' => 'required|in:stock_in,stock_out,adjustment,sale,return',
+        'adjustmentNote' => 'nullable|string|max:255',
+    ];
+
+    /* =========================
+       Modal Handlers
+    ==========================*/
+
+    public function openAdjustmentModal(int $inventoryId)
+    {
+        $this->resetAdjustmentForm();
+        $this->selectedInventoryId = $inventoryId;
+        $this->dispatch('open-adjustment-modal');
+    }
+
+    public function openHistoryModal(int $inventoryId)
+    {
+        $this->selectedHistoryInventoryId = $inventoryId;
+        $this->dispatch('open-history-modal');
+    }
+
+    public function resetAdjustmentForm()
+    {
+        $this->reset(['selectedInventoryId', 'adjustmentQuantity', 'adjustmentNote']);
+        $this->adjustmentType = 'stock_in';
+    }
+
+    public function applyAdjustment()
+    {
+        $this->validate();
+
+        $inventory = Inventory::findOrFail($this->selectedInventoryId);
+
+        if (!$inventory->track_inventory) {
+            $this->dispatch('toast-show', [
+                'message' => 'Tracking is disabled for this item. Enable "Track Inventory" in product settings to make adjustments.',
+                'type' => 'warning',
+                'position' => 'top-right',
+            ]);
+            $this->dispatch('close-adjustment-modal');
+            return;
+        }
+
+        $before = $inventory->quantity;
+
+        $qtyChange = (int) $this->adjustmentQuantity;
+
+        // If it's stock out or a sale, we subtract
+        if (in_array($this->adjustmentType, ['stock_out', 'sale'])) {
+            $qtyChange = -$qtyChange;
+        }
+
+        $after = $before + $qtyChange;
+
+        DB::transaction(function () use ($inventory, $before, $after, $qtyChange) {
+            // Update Inventory
+            $inventory->update([
+                'quantity' => $after
+            ]);
+
+            // Sync with ProductVariant legacy stock column
+            $inventory->variant->update([
+                'stock' => $after
+            ]);
+
+            // Create Log
+            InventoryLog::create([
+                'inventory_id' => $inventory->id,
+                'type' => $this->adjustmentType,
+                'quantity' => abs($qtyChange),
+                'before_quantity' => $before,
+                'after_quantity' => $after,
+                'note' => $this->adjustmentNote,
+            ]);
+        });
+
+        $this->dispatch('toast-show', [
+            'message' => 'Stock adjusted successfully!',
+            'type' => 'success',
+            'position' => 'top-right',
+        ]);
+
+        $this->dispatch('close-adjustment-modal');
+        $this->resetAdjustmentForm();
+    }
+
+    /* =========================
+       Data Fetching
+    ==========================*/
+
+    public function getStockItems()
+    {
+        // We query variants and their inventories
+        return ProductVariant::query()
+            ->with(['product', 'inventory', 'variantAttributes.attribute', 'variantAttributes.value'])
+            ->leftJoin('products', 'product_variants.product_id', '=', 'products.id')
+            ->select('product_variants.*')
+            ->where(function ($q) {
+                $q->where('products.name', 'like', '%' . $this->search . '%')
+                    ->orWhere('product_variants.sku', 'like', '%' . $this->search . '%');
+            })
+            ->latest('product_variants.created_at')
+            ->paginate(10);
+    }
+
+    public function getSelectedInventoryHistory()
+    {
+        if (!$this->selectedHistoryInventoryId) return collect();
+
+        return InventoryLog::where('inventory_id', $this->selectedHistoryInventoryId)
+            ->latest()
+            ->get();
+    }
+
+    #[Layout('layouts.admin')]
+    public function render()
+    {
+        // Ensure every variant has an inventory record (Lazy initialization if missing)
+        $variants = $this->getStockItems();
+
+        foreach ($variants as $variant) {
+            if (!$variant->inventory) {
+                $variant->inventory()->create([
+                    'quantity' => 0,
+                    'reserved_quantity' => 0,
+                    'low_stock_threshold' => 5,
+                    'track_inventory' => true
+                ]);
+                $variant->load('inventory');
+            }
+        }
+
+        return view('livewire.admin.stock.stock-list', [
+            'variants' => $variants,
+            'historyLogs' => $this->getSelectedInventoryHistory(),
+            'selectedInventory' => $this->selectedHistoryInventoryId ? Inventory::with('variant.product')->find($this->selectedHistoryInventoryId) : null
+        ]);
+    }
+}

@@ -37,6 +37,7 @@ class AddProduct extends Component
     public $cost_price = '';
     public $stock = '';
     public $low_stock_alert = '5';
+    public $track_inventory = true;
     public $weight = '';
 
     // ── Step 3: Variants ──
@@ -310,7 +311,7 @@ class AddProduct extends Component
         ]);
 
         if (!$this->has_variants) {
-            $product->variants()->create([
+            $variant = $product->variants()->create([
                 'sku' => $this->sku ?: 'SKU-' . strtoupper(Str::random(8)),
                 'barcode' => $this->barcode ?: null,
                 'price' => $this->price,
@@ -322,6 +323,25 @@ class AddProduct extends Component
                 'is_default' => true,
                 'status' => true,
             ]);
+
+            // Create Inventory
+            $inventory = $variant->inventory()->create([
+                'quantity' => $this->stock,
+                'low_stock_threshold' => $this->low_stock_alert ?: 5,
+                'track_inventory' => $this->track_inventory
+            ]);
+
+            // Create Initial Log if stock > 0
+            if ($this->stock > 0) {
+                \App\Models\InventoryLog::create([
+                    'inventory_id' => $inventory->id,
+                    'type' => 'stock_in',
+                    'quantity' => $this->stock,
+                    'before_quantity' => 0,
+                    'after_quantity' => $this->stock,
+                    'note' => 'Initial stock on product creation',
+                ]);
+            }
         } else {
             foreach ($this->variants as $i => $v) {
                 $variant = $product->variants()->create([
@@ -332,6 +352,25 @@ class AddProduct extends Component
                     'is_default' => $i === 0,
                     'status' => $v['status'] ?? true,
                 ]);
+
+                // Create Inventory
+                $inventory = $variant->inventory()->create([
+                    'quantity' => $v['stock'] ?: 0,
+                    'low_stock_threshold' => 5, // Default
+                    'track_inventory' => $this->track_inventory
+                ]);
+
+                // Create Initial Log if stock > 0
+                if (($v['stock'] ?? 0) > 0) {
+                    \App\Models\InventoryLog::create([
+                        'inventory_id' => $inventory->id,
+                        'type' => 'stock_in',
+                        'quantity' => $v['stock'],
+                        'before_quantity' => 0,
+                        'after_quantity' => $v['stock'],
+                        'note' => 'Initial stock on variant creation',
+                    ]);
+                }
 
                 // Save Variant Images if uploaded
                 if (isset($this->variantImages[$i]) && is_array($this->variantImages[$i])) {
