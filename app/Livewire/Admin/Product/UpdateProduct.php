@@ -58,7 +58,13 @@ class UpdateProduct extends Component
 
     public function mount(Product $product)
     {
-        $this->product = $product->load(['variants.variantAttributes', 'variants.inventory', 'images', 'category']);
+        $this->product = $product->load([
+            'variants.variantAttributes',
+            'variants.inventory',
+            'variants.images',
+            'images' => fn($q) => $q->whereNull('product_variant_id'),
+            'category'
+        ]);
 
         // Load Basic Info
         $this->name = $this->product->name;
@@ -393,8 +399,8 @@ class UpdateProduct extends Component
 
     public function setPrimaryImage(int $imageId)
     {
-        // 1. Reset all images for this product to NOT primary
-        ProductImage::where('product_id', $this->product->id)->update(['is_primary' => false]);
+        // 1. Reset all general images for this product to NOT primary
+        ProductImage::where('product_id', $this->product->id)->whereNull('product_variant_id')->update(['is_primary' => false]);
 
         // 2. Set the selected one as primary
         $image = ProductImage::find($imageId);
@@ -630,7 +636,7 @@ class UpdateProduct extends Component
 
         // Add New Images
         if ($this->productImages) {
-            $lastSortOrder = $this->product->images()->max('sort_order') ?? -1;
+            $lastSortOrder = $this->product->images()->whereNull('product_variant_id')->max('sort_order') ?? -1;
             foreach ($this->productImages as $i => $image) {
                 $path = $image->store('products', 'public');
                 ProductImage::create([
